@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <unistd.h>
 
 #include <libubox/uloop.h>
@@ -68,8 +67,8 @@ int main(int argc, char **argv)
 
   ubus_add_uloop(ctx);
 
-  /* TODO: Discover and initialize modules */
-  /* nodewatcher_module_init(ctx); */
+  /* Discover and initialize modules */
+  nw_module_init(ctx);
 
   /* Enter the event loop */
   uloop_run();

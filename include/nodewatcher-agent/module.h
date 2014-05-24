@@ -22,8 +22,10 @@
 #include <json.h>
 
 struct nodewatcher_module_hooks {
-  /* Hook that returns all the details */
-  int (*get_all_details)(json_object *object);
+  /* Hook that initializes the module */
+  int (*init)(struct ubus_context *ctx);
+  /* Hook that requests the module to start acquiring data */
+  int (*start_acquire_data)(struct ubus_context *ctx);
 };
 
 struct nodewatcher_module {
@@ -37,6 +39,7 @@ struct nodewatcher_module {
   struct nodewatcher_module_hooks hooks;
 };
 
-int nodewatcher_register_module(struct nodewatcher_module *module);
+int nw_module_init(struct ubus_context *ctx);
+int nw_store_data(struct nodewatcher_module *module, json_object *object);
 
 #endif

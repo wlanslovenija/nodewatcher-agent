@@ -25,6 +25,8 @@ set(LIBS
   ${json}
 )
 
+include_directories(include)
+
 # Nodewatcher agent binary
 add_executable(nodewatcher-agent ${SOURCES})
 target_link_libraries(nodewatcher-agent ${LIBS})
