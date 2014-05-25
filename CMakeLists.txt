@@ -23,6 +23,7 @@ set(LIBS
   ubus
   uci
   ${json}
+  dl
 )
 
 include_directories(include)

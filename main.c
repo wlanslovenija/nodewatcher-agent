@@ -17,10 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <unistd.h>
-
 #include <libubox/uloop.h>
 #include <libubus.h>
 #include <signal.h>
+#include <syslog.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <nodewatcher-agent/module.h>
 
 /* Global ubus connection context */
 static struct ubus_context *ctx;
@@ -32,18 +36,19 @@ int main(int argc, char **argv)
 {
   struct stat s;
   const char *ubus_socket = NULL;
+  int log_option = 0;
   int c;
 
   while ((c = getopt(argc, argv, "s:")) != -1) {
-    switch (ch) {
-      case 's': {
-        ubus_socket = optarg;
-        break;
-      }
-
+    switch (c) {
+      case 's': ubus_socket = optarg; break;
+      case 'f': log_option |= LOG_PERROR; break;
       default: break;
     }
   }
+
+  /* Open the syslog facility */
+  openlog("nw-agent", log_option, LOG_DAEMON);
 
   /* Create directory for temporary run files */
   if (stat("/var/run/nodewatcher-agent", &s))

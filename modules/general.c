@@ -20,10 +20,12 @@
 
 static int nw_general_start_acquire_data(struct ubus_context *ctx)
 {
+  return -1;
 }
 
 static int nw_general_init(struct ubus_context *ctx)
 {
+  return -1;
 }
 
 /* Module descriptor */
