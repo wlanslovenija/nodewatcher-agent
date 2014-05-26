@@ -38,7 +38,7 @@ static int nw_general_start_acquire_data(struct ubus_context *ubus,
   /* Machine identifier from /proc/cpuinfo */
 
   /* Store resulting JSON object */
-  return nw_finish_acquire_data(&nw_module, object);
+  return nw_module_finish_acquire_data(&nw_module, object);
 }
 
 static int nw_general_init(struct ubus_context *ubus)
@@ -54,5 +54,8 @@ struct nodewatcher_module nw_module = {
   .hooks = {
     .init               = nw_general_init,
     .start_acquire_data = nw_general_start_acquire_data,
+  },
+  .schedule = {
+    .refresh_interval = 30,
   },
 };

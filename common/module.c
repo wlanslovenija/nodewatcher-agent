@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <nodewatcher-agent/module.h>
+#include <nodewatcher-agent/scheduler.h>
 
 #include <libubox/avl-cmp.h>
 #include <sys/types.h>
@@ -28,6 +29,10 @@
 
 /* AVL tree containing all registered modules with module name as their key */
 static struct avl_tree module_registry;
+/* Module ubus connection context */
+static struct ubus_context *module_ubus;
+/* Module UCI context */
+static struct uci_context *module_uci;
 
 static int nw_module_register_library(struct ubus_context *ubus, const char *path)
 {
@@ -55,12 +60,16 @@ static int nw_module_register_library(struct ubus_context *ubus, const char *pat
   }
 
   /* Perform module initialization */
+  module->sched_status = NW_MODULE_INIT;
   ret = module->hooks.init(ubus);
   if (ret != 0) {
     avl_delete(&module_registry, &module->avl);
     syslog(LOG_WARNING, "Loading of module '%s' (%s) has failed!", module->name, path);
   } else {
     syslog(LOG_INFO, "Loaded module '%s' (%s).", module->name, path);
+
+    /* Schedule module for immediate execution */
+    nw_scheduler_schedule_module(module);
   }
 
   return ret;
@@ -68,6 +77,10 @@ static int nw_module_register_library(struct ubus_context *ubus, const char *pat
 
 int nw_module_init(struct ubus_context *ubus, struct uci_context *uci)
 {
+  /* Initialize ubus and UCI contexts */
+  module_ubus = ubus;
+  module_uci = uci;
+
   /* Initialize the module registry */
   avl_init(&module_registry, avl_strcmp, false, NULL);
 
@@ -95,8 +108,18 @@ int nw_module_init(struct ubus_context *ubus, struct uci_context *uci)
   return ret;
 }
 
-int nw_finish_acquire_data(struct nodewatcher_module *module, json_object *object)
+int nw_module_start_acquire_data(struct nodewatcher_module *module)
+{
+  return module->hooks.start_acquire_data(module_ubus, module_uci);
+}
+
+int nw_module_finish_acquire_data(struct nodewatcher_module *module, json_object *object)
 {
   /* TODO */
-  return -1;
+
+  /* Reschedule module */
+  module->sched_status = NW_MODULE_NONE;
+  nw_scheduler_schedule_module(module);
+
+  return 0;
 }

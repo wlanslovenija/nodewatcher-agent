@@ -38,6 +38,18 @@ struct nodewatcher_module_hooks {
                             struct uci_context *uci);
 };
 
+struct nodewatcher_module_schedule {
+  /* Data refresh interval */
+  time_t refresh_interval;
+};
+
+enum {
+  NW_MODULE_NONE = 0,
+  NW_MODULE_SCHEDULED = 1,
+  NW_MODULE_PENDING_DATA = 2,
+  NW_MODULE_INIT = 3,
+};
+
 /**
  * Nodewatcher agent module descriptor. One should be provided by each
  * module and named nw_module.
@@ -51,8 +63,17 @@ struct nodewatcher_module {
   unsigned int version;
   /* Operation implementing hooks */
   struct nodewatcher_module_hooks hooks;
+  /* Schedule interval */
+  struct nodewatcher_module_schedule schedule;
+
   /* Module registry AVL node */
   struct avl_node avl;
+  /* Scheduler list node */
+  struct list_head sched_list;
+  /* Module scheduling status */
+  int sched_status;
+  /* Module next scheduled run */
+  struct timeval sched_next_run;
 };
 
 /**
@@ -65,6 +86,14 @@ struct nodewatcher_module {
 int nw_module_init(struct ubus_context *ubus, struct uci_context *uci);
 
 /**
+ * Invokes the module's hook for start of data acquiry.
+ *
+ * @param module Module that should start with data acquiry
+ * @return On success 0 is returned, -1 otherwise
+ */
+int nw_module_start_acquire_data(struct nodewatcher_module *module);
+
+/**
  * Signals that a module has finished acquiring data and has a resulting
  * JSON object ready.
  *
@@ -72,6 +101,6 @@ int nw_module_init(struct ubus_context *ubus, struct uci_context *uci);
  * @param object JSON result object
  * @return On success 0 is returned, -1 otherwise
  */
-int nw_finish_acquire_data(struct nodewatcher_module *module, json_object *object);
+int nw_module_finish_acquire_data(struct nodewatcher_module *module, json_object *object);
 
 #endif

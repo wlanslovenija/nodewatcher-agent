@@ -26,6 +26,7 @@
 #include <sys/types.h>
 
 #include <nodewatcher-agent/module.h>
+#include <nodewatcher-agent/scheduler.h>
 
 /* Global ubus connection context */
 static struct ubus_context *ubus;
@@ -85,6 +86,12 @@ int main(int argc, char **argv)
   /* Discover and initialize modules */
   if (nw_module_init(ubus, uci) != 0) {
     fprintf(stderr, "ERROR: Unable to initialize modules!\n");
+    return -1;
+  }
+
+  /* Initialize the scheduler */
+  if (nw_scheduler_init() != 0) {
+    fprintf(stderr, "ERROR: Unable to initialize scheduler!\n");
     return -1;
   }
 

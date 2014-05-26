@@ -16,8 +16,6 @@ find_library(json NAMES json-c json)
 
 set(SOURCES
   main.c
-  module.c
-  json.c
 )
 
 set(LIBS
@@ -30,9 +28,18 @@ set(LIBS
 
 include_directories(include)
 
+# Nodewatcher agent common library
+set(COMMON_SOURCES
+  common/module.c
+  common/scheduler.c
+  common/json.c
+)
+add_library(nodewatcher-agent-common SHARED ${COMMON_SOURCES})
+target_link_libraries(nodewatcher-agent-common ${LIBS})
+
 # Nodewatcher agent binary
 add_executable(nodewatcher-agent ${SOURCES})
-target_link_libraries(nodewatcher-agent ${LIBS})
+target_link_libraries(nodewatcher-agent ${LIBS} nodewatcher-agent-common)
 
 # Modules
 set(MODULES "")
@@ -41,7 +48,7 @@ set(MODULES "")
 if(GENERAL_MODULE)
   set(MODULES ${MODULES} general_module)
   add_library(general_module MODULE modules/general.c)
-  target_link_libraries(general_module ubox uci)
+  target_link_libraries(general_module ubox uci nodewatcher-agent-common)
   set_target_properties(general_module PROPERTIES OUTPUT_NAME general PREFIX "")
 endif()
 
@@ -49,7 +56,7 @@ endif()
 if(RESOURCES_MODULE)
   set(MODULES ${MODULES} resources_module)
   add_library(resources_module MODULE modules/resources.c)
-  target_link_libraries(resources_module ubox uci)
+  target_link_libraries(resources_module ubox uci nodewatcher-agent-common)
   set_target_properties(resources_module PROPERTIES OUTPUT_NAME resources PREFIX "")
 endif()
 
@@ -57,7 +64,7 @@ endif()
 if(INTERFACES_MODULE)
   set(MODULES ${MODULES} interfaces_module)
   add_library(interfaces_module MODULE modules/interfaces.c)
-  target_link_libraries(interfaces_module ubox uci)
+  target_link_libraries(interfaces_module ubox uci nodewatcher-agent-common)
   set_target_properties(interfaces_module PROPERTIES OUTPUT_NAME interfaces PREFIX "")
 endif()
 
@@ -65,7 +72,7 @@ endif()
 if(WIRELESS_MODULE)
   set(MODULES ${MODULES} wireless_module)
   add_library(wireless_module MODULE modules/wireless.c)
-  target_link_libraries(wireless_module ubox uci)
+  target_link_libraries(wireless_module ubox uci nodewatcher-agent-common)
   set_target_properties(wireless_module PROPERTIES OUTPUT_NAME wireless PREFIX "")
 endif()
 
@@ -73,7 +80,7 @@ endif()
 if(KEYS_SSH_MODULE)
   set(MODULES ${MODULES} keys_ssh_module)
   add_library(keys_ssh_module MODULE modules/keys_ssh.c)
-  target_link_libraries(keys_ssh_module ubox uci)
+  target_link_libraries(keys_ssh_module ubox uci nodewatcher-agent-common)
   set_target_properties(keys_ssh_module PROPERTIES OUTPUT_NAME keys_ssh PREFIX "")
 endif()
 
@@ -81,11 +88,11 @@ endif()
 if(PACKAGES_MODULE)
   set(MODULES ${MODULES} packages_module)
   add_library(packages_module MODULE modules/packages.c)
-  target_link_libraries(packages_module ubox uci)
+  target_link_libraries(packages_module ubox uci nodewatcher-agent-common)
   set_target_properties(packages_module PROPERTIES OUTPUT_NAME packages PREFIX "")
 endif()
 
-install(TARGETS nodewatcher-agent ${MODULES}
-  RUNTIME DESTINATION sbin
+install(TARGETS nodewatcher-agent nodewatcher-agent-common ${MODULES}
+  RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
 )

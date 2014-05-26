@@ -38,7 +38,7 @@ static int nw_resources_start_acquire_data(struct ubus_context *ubus,
   /* CPU usage by category */
 
   /* Store resulting JSON object */
-  nw_finish_acquire_data(&nw_module, object);
+  nw_module_finish_acquire_data(&nw_module, object);
 
   /*
     uptime (file:/proc/uptime)
@@ -81,5 +81,8 @@ struct nodewatcher_module nw_module = {
   .hooks = {
     .init               = nw_resources_init,
     .start_acquire_data = nw_resources_start_acquire_data,
+  },
+  .schedule = {
+    .refresh_interval = 30,
   },
 };
