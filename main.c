@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <libubox/uloop.h>
 #include <libubus.h>
+#include <uci.h>
 #include <signal.h>
 #include <syslog.h>
 #include <sys/stat.h>
@@ -27,7 +28,9 @@
 #include <nodewatcher-agent/module.h>
 
 /* Global ubus connection context */
-static struct ubus_context *ctx;
+static struct ubus_context *ubus;
+/* Global UCI context */
+static struct uci_context *uci;
 
 /**
  * Nodewatcher agent entry point.
@@ -64,20 +67,31 @@ int main(int argc, char **argv)
   uloop_init();
 
   /* Attempt to establish connection to ubus daemon */
-  ctx = ubus_connect(ubus_socket);
-  if (!ctx) {
+  ubus = ubus_connect(ubus_socket);
+  if (!ubus) {
     fprintf(stderr, "ERROR: Failed to connect to ubus!");
     return -1;
   }
 
-  ubus_add_uloop(ctx);
+  ubus_add_uloop(ubus);
+
+  /* Initialize UCI context */
+  uci = uci_alloc_context();
+  if (!uci) {
+    fprintf(stderr, "ERROR: Failed to initialize UCI!\n");
+    return -1;
+  }
 
   /* Discover and initialize modules */
-  nw_module_init(ctx);
+  if (nw_module_init(ubus, uci) != 0) {
+    fprintf(stderr, "ERROR: Unable to initialize modules!\n");
+    return -1;
+  }
 
   /* Enter the event loop */
   uloop_run();
-  ubus_free(ctx);
+  ubus_free(ubus);
+  uci_free_context(uci);
   uloop_done();
 
   return 0;

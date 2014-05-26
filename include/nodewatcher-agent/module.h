@@ -22,6 +22,7 @@
 #include <json/json.h>
 #include <libubox/avl.h>
 #include <libubus.h>
+#include <uci.h>
 
 /* Location of nodewatcher library modules */
 #define NW_MODULE_DIRECTORY "/usr/lib/nodewatcher-agent"
@@ -31,9 +32,10 @@
  */
 struct nodewatcher_module_hooks {
   /* Hook that initializes the module */
-  int (*init)(struct ubus_context *ctx);
+  int (*init)(struct ubus_context *ubus);
   /* Hook that requests the module to start acquiring data */
-  int (*start_acquire_data)(struct ubus_context *ctx);
+  int (*start_acquire_data)(struct ubus_context *ubus,
+                            struct uci_context *uci);
 };
 
 /**
@@ -56,10 +58,11 @@ struct nodewatcher_module {
 /**
  * Performs module discovery and initialization.
  *
- * @param ctx UBUS context
+ * @param ubus UBUS context
+ * @param uci UCI context
  * @return On success 0 is returned, -1 otherwise
  */
-int nw_module_init(struct ubus_context *ctx);
+int nw_module_init(struct ubus_context *ubus, struct uci_context *uci);
 
 /**
  * Signals that a module has finished acquiring data and has a resulting

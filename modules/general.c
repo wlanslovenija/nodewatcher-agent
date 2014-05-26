@@ -17,15 +17,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <nodewatcher-agent/module.h>
+#include <nodewatcher-agent/json.h>
 
-static int nw_general_start_acquire_data(struct ubus_context *ctx)
+/* Module forward declaration */
+struct nodewatcher_module nw_module;
+
+static int nw_general_start_acquire_data(struct ubus_context *ubus,
+                                         struct uci_context *uci)
 {
-  return -1;
+  json_object *object = json_object_new_object();
+  /* UUID */
+  nw_json_from_uci(uci, "system.@system[0].uuid", object, "uuid");
+  /* Hostname */
+  nw_json_from_uci(uci, "system.@system[0].hostname", object, "hostname");
+  /* Firmware version */
+  nw_json_from_file("/etc/version", object, "version");
+  /* Local UNIX time */
+  json_object_object_add(object, "local_time", json_object_new_int(time(NULL)));
+  /* Uptime in seconds */
+  /* Machine identifier from /proc/cpuinfo */
+
+  /* Store resulting JSON object */
+  return nw_finish_acquire_data(&nw_module, object);
 }
 
-static int nw_general_init(struct ubus_context *ctx)
+static int nw_general_init(struct ubus_context *ubus)
 {
-  return -1;
+  return 0;
 }
 
 /* Module descriptor */

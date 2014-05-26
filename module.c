@@ -29,7 +29,7 @@
 /* AVL tree containing all registered modules with module name as their key */
 static struct avl_tree module_registry;
 
-static int nw_module_register_library(struct ubus_context *ctx, const char *path)
+static int nw_module_register_library(struct ubus_context *ubus, const char *path)
 {
   struct nodewatcher_module *module;
   void *handle;
@@ -55,7 +55,7 @@ static int nw_module_register_library(struct ubus_context *ctx, const char *path
   }
 
   /* Perform module initialization */
-  ret = module->hooks.init(ctx);
+  ret = module->hooks.init(ubus);
   if (ret != 0) {
     avl_delete(&module_registry, &module->avl);
     syslog(LOG_WARNING, "Loading of module '%s' (%s) has failed!", module->name, path);
@@ -66,7 +66,7 @@ static int nw_module_register_library(struct ubus_context *ctx, const char *path
   return ret;
 }
 
-int nw_module_init(struct ubus_context *ctx)
+int nw_module_init(struct ubus_context *ubus, struct uci_context *uci)
 {
   /* Initialize the module registry */
   avl_init(&module_registry, avl_strcmp, false, NULL);
@@ -86,7 +86,7 @@ int nw_module_init(struct ubus_context *ctx)
       if (stat(path, &s) || !S_ISREG(s.st_mode))
         continue;
 
-      ret |= nw_module_register_library(ctx, path);
+      ret |= nw_module_register_library(ubus, path);
     }
 
     closedir(d);

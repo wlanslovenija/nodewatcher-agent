@@ -4,6 +4,7 @@ project(nodewatcher-agent C)
 add_definitions(-Os -Wall -Werror --std=gnu99 -Wmissing-declarations)
 
 option(GENERAL_MODULE "General module support" ON)
+option(RESOURCES_MODULE "Resources module support" ON)
 option(INTERFACES_MODULE "Interfaces module support" ON)
 option(WIRELESS_MODULE "Wireless module support" ON)
 option(KEYS_SSH_MODULE "SSH keys module support" ON)
@@ -16,6 +17,7 @@ find_library(json NAMES json-c json)
 set(SOURCES
   main.c
   module.c
+  json.c
 )
 
 set(LIBS
@@ -41,6 +43,14 @@ if(GENERAL_MODULE)
   add_library(general_module MODULE modules/general.c)
   target_link_libraries(general_module ubox uci)
   set_target_properties(general_module PROPERTIES OUTPUT_NAME general PREFIX "")
+endif()
+
+# Resources module
+if(RESOURCES_MODULE)
+  set(MODULES ${MODULES} resources_module)
+  add_library(resources_module MODULE modules/resources.c)
+  target_link_libraries(resources_module ubox uci)
+  set_target_properties(resources_module PROPERTIES OUTPUT_NAME resources PREFIX "")
 endif()
 
 # Interfaces module
@@ -75,7 +85,7 @@ if(PACKAGES_MODULE)
   set_target_properties(packages_module PROPERTIES OUTPUT_NAME packages PREFIX "")
 endif()
 
-install(TARGETS nodewatcher-agent ${PLUGINS}
+install(TARGETS nodewatcher-agent ${MODULES}
   RUNTIME DESTINATION sbin
   LIBRARY DESTINATION lib
 )
