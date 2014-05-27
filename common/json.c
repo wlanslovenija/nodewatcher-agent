@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <nodewatcher-agent/json.h>
+#include <nodewatcher-agent/utils.h>
 
 #include <string.h>
 #include <ctype.h>
@@ -63,27 +64,6 @@ int nw_json_from_uci(struct uci_context *uci,
   return 0;
 }
 
-static char *trim_string(char *str)
-{
-  char *end;
-
-  /* Trim leading spaces */
-  while (isspace(*str))
-    str++;
-
-  if (*str == 0)
-    return str;
-
-  /* Trim trailing spaces */
-  end = str + strlen(str) - 1;
-  while (end > str && isspace(*end))
-    end--;
-
-  /* Write new null terminator */
-  *(end + 1) = 0;
-  return str;
-}
-
 int nw_json_from_file(const char *filename,
                       json_object *object,
                       const char *key)
@@ -110,7 +90,7 @@ int nw_json_from_file(const char *filename,
   fclose(file);
 
   buffer[buffer_len] = 0;
-  json_object_object_add(object, key, json_object_new_string(trim_string(buffer)));
+  json_object_object_add(object, key, json_object_new_string(nw_string_trim(buffer)));
   free(buffer);
   return 0;
 }
