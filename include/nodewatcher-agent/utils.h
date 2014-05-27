@@ -30,4 +30,6 @@
  */
 char *nw_string_trim(char *str);
 
+int nw_file_line_count(const char *filename);
+
 #endif

@@ -79,7 +79,7 @@ static int nw_module_register_library(struct ubus_context *ubus, const char *pat
 
   /* Perform module initialization */
   module->sched_status = NW_MODULE_INIT;
-  ret = module->hooks.init(ubus);
+  ret = module->hooks.init(module, ubus);
   if (ret != 0) {
     avl_delete(&module_registry, &module->avl);
     syslog(LOG_WARNING, "Loading of module '%s' (%s) has failed!", module->name, path);
@@ -183,7 +183,7 @@ int nw_module_init(struct ubus_context *ubus, struct uci_context *uci)
 
 int nw_module_start_acquire_data(struct nodewatcher_module *module)
 {
-  return module->hooks.start_acquire_data(module_ubus, module_uci);
+  return module->hooks.start_acquire_data(module, module_ubus, module_uci);
 }
 
 int nw_module_finish_acquire_data(struct nodewatcher_module *module, json_object *object)

@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 
 char *nw_string_trim(char *str)
 {
@@ -40,4 +41,19 @@ char *nw_string_trim(char *str)
   /* Write new null terminator */
   *(end + 1) = 0;
   return str;
+}
+
+int nw_file_line_count(const char *filename)
+{
+  FILE *file = fopen(filename, "r");
+  if (!file)
+    return -1;
+
+  int lines = 0;
+  while (!feof(file)) {
+    fscanf(file, "%*[^\n]\n");
+    lines++;
+  }
+
+  return lines;
 }

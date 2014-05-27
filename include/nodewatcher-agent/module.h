@@ -27,14 +27,18 @@
 /* Location of nodewatcher library modules */
 #define NW_MODULE_DIRECTORY "/usr/lib/nodewatcher-agent"
 
+struct nodewatcher_module;
+
 /**
  * Hooks that must be implemented by nodewatcher agent modules.
  */
 struct nodewatcher_module_hooks {
   /* Hook that initializes the module */
-  int (*init)(struct ubus_context *ubus);
+  int (*init)(struct nodewatcher_module *module,
+              struct ubus_context *ubus);
   /* Hook that requests the module to start acquiring data */
-  int (*start_acquire_data)(struct ubus_context *ubus,
+  int (*start_acquire_data)(struct nodewatcher_module *module,
+                            struct ubus_context *ubus,
                             struct uci_context *uci);
 };
 

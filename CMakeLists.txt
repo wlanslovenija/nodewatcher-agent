@@ -25,6 +25,7 @@ set(LIBS
   ${json}
   blobmsg_json
   dl
+  m
 )
 
 include_directories(include)
