@@ -30,6 +30,12 @@
  */
 char *nw_string_trim(char *str);
 
+/**
+ * Returns the number of lines in a file.
+ *
+ * @param filename Filename
+ * @return Number of lines on success, -1 on failure
+ */
 int nw_file_line_count(const char *filename);
 
 #endif
