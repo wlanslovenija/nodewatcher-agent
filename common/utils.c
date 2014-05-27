@@ -55,5 +55,6 @@ int nw_file_line_count(const char *filename)
     lines++;
   }
 
+  fclose(file);
   return lines;
 }
