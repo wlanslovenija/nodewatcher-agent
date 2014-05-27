@@ -23,6 +23,7 @@ set(LIBS
   ubus
   uci
   ${json}
+  blobmsg_json
   dl
 )
 

@@ -66,12 +66,16 @@ struct nodewatcher_module {
   /* Schedule interval */
   struct nodewatcher_module_schedule schedule;
 
+  /* --- Internal attributes below --- */
+
   /* Module registry AVL node */
   struct avl_node avl;
   /* Module scheduling status */
   int sched_status;
   /* Module next scheduled run */
   struct uloop_timeout sched_timeout;
+  /* Last data object */
+  json_object *data;
 };
 
 /**
