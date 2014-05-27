@@ -20,56 +20,14 @@
 
 #include <time.h>
 
-/* Module schedule queue */
-static LIST_HEAD(sched_modules);
-/* Timeout for running module scheduling */
-static struct uloop_timeout run_module_timeout;
-
-static void nw_scheduler_gettime(struct timeval *tv)
+static void nw_scheduler_run_module(struct uloop_timeout *timeout)
 {
-  struct timespec ts;
+  struct nodewatcher_module *module;
 
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  tv->tv_sec = ts.tv_sec;
-  tv->tv_usec = ts.tv_nsec / 1000;
-}
-
-static int tv_diff(struct timeval *t1, struct timeval *t2)
-{
-  return (t1->tv_sec - t2->tv_sec) * 1000 +
-         (t1->tv_usec - t2->tv_usec) / 1000;
-}
-
-static void nw_scheduler_run_modules(struct uloop_timeout *timeout)
-{
-  struct nodewatcher_module *module, *tmp;
-  struct timeval now;
-  nw_scheduler_gettime(&now);
-
-  /* Iterate through the modules and execute those that are pending execution */
-  list_for_each_entry_safe(module, tmp, &sched_modules, sched_list) {
-    if (tv_diff(&module->sched_next_run, &now) <= 0) {
-      /* Invoke module hooks. Note that this call may cause the module to be
-         rescheduled, but since the timer has just expired, it will not be
-         reset, so we still need to reschedule the timer below. */
-      list_del(&module->sched_list);
-      nw_module_start_acquire_data(module);
-    } else {
-      /* Since the modules are sorted by time, no more modules will match */
-      break;
-    }
-  }
-
-  /* Reschedule timer if there are any pending modules */
-  uloop_timeout_cancel(&run_module_timeout);
-  if (!list_empty(&sched_modules)) {
-    struct nodewatcher_module *next_module =
-      container_of(&sched_modules, struct nodewatcher_module, sched_list);
-
-    run_module_timeout.time.tv_sec = next_module->sched_next_run.tv_sec;
-    run_module_timeout.time.tv_usec = next_module->sched_next_run.tv_usec;
-    uloop_timeout_add(&run_module_timeout);
-  }
+  /* Extract the module where the timeout ocurred */
+  module = container_of(timeout, struct nodewatcher_module, sched_timeout);
+  /* Signal the module to start acquiring data */
+  nw_module_start_acquire_data(module);
 }
 
 int nw_scheduler_schedule_module(struct nodewatcher_module *module)
@@ -87,36 +45,15 @@ int nw_scheduler_schedule_module(struct nodewatcher_module *module)
   }
 
   /* Schedule the module */
-  nw_scheduler_gettime(&module->sched_next_run);
-  module->sched_next_run.tv_sec += timeout;
-
-  struct nodewatcher_module *tmp;
-  struct list_head *head = &sched_modules;
-  list_for_each_entry(tmp, &sched_modules, sched_list) {
-    if (tv_diff(&tmp->sched_next_run, &module->sched_next_run) > 0) {
-      head = &tmp->sched_list;
-      break;
-    }
-  }
-
-  list_add_tail(&module->sched_list, head);
+  uloop_timeout_cancel(&module->sched_timeout);
+  module->sched_timeout.cb = nw_scheduler_run_module;
+  uloop_timeout_set(&module->sched_timeout, timeout * 1000);
   module->sched_status = NW_MODULE_SCHEDULED;
-
-  if (tv_diff(&module->sched_next_run, &run_module_timeout.time) < 0) {
-    uloop_timeout_cancel(&run_module_timeout);
-    run_module_timeout.time.tv_sec = module->sched_next_run.tv_sec;
-    run_module_timeout.time.tv_usec = module->sched_next_run.tv_usec;
-    uloop_timeout_add(&run_module_timeout);
-  }
 
   return 0;
 }
 
 int nw_scheduler_init()
 {
-  /* Setup the callback and set the scheduler to run immediately */
-  run_module_timeout.cb = nw_scheduler_run_modules;
-  uloop_timeout_set(&run_module_timeout, 0);
-
   return 0;
 }

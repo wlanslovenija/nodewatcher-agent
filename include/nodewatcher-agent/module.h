@@ -68,12 +68,10 @@ struct nodewatcher_module {
 
   /* Module registry AVL node */
   struct avl_node avl;
-  /* Scheduler list node */
-  struct list_head sched_list;
   /* Module scheduling status */
   int sched_status;
   /* Module next scheduled run */
-  struct timeval sched_next_run;
+  struct uloop_timeout sched_timeout;
 };
 
 /**
