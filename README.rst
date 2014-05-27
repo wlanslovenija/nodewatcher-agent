@@ -7,6 +7,25 @@ HTTP.
 
 .. _nodewatcher: https://github.com/wlanslovenija/nodewatcher
 
+UBUS API
+--------
+
+The nodewatcher agent exposes an API via UBUS_ so other applications can access its
+data feeds. It registers itself under the `nodewatcher.agent` identifier. Currently
+the only supported method is `get_data` which can be used as follows::
+
+  $ ubus call nodewatcher.agent get_data
+  {
+    ...
+    // Returns data feed in the format described below
+
+The method accepts a single parameter called `module` which can be used to limit the
+output to a specific module as follows::
+
+  $ ubus call nodewatcher.agent get_data "{ 'module': 'core.general' }"
+
+.. _UBUS: http://wiki.openwrt.org/doc/techref/ubus
+
 Monitoring report format
 ------------------------
 
