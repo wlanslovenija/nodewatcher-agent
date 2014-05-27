@@ -51,3 +51,6 @@ To output monitoring data, JSON format is used as in the following example:
       'machine': 'TP-LINK TL-WR1043ND'
     }
   }
+
+All float values are encoded as strings due to the fact that ubus message blobs do
+not currently support serialization of float/double types.
