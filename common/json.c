@@ -19,6 +19,7 @@
 #include <nodewatcher-agent/json.h>
 
 #include <string.h>
+#include <ctype.h>
 
 int nw_json_from_uci(struct uci_context *uci,
                      const char *location,
@@ -62,9 +63,54 @@ int nw_json_from_uci(struct uci_context *uci,
   return 0;
 }
 
+static char *trim_string(char *str)
+{
+  char *end;
+
+  /* Trim leading spaces */
+  while (isspace(*str))
+    str++;
+
+  if (*str == 0)
+    return str;
+
+  /* Trim trailing spaces */
+  end = str + strlen(str) - 1;
+  while (end > str && isspace(*end))
+    end--;
+
+  /* Write new null terminator */
+  *(end + 1) = 0;
+  return str;
+}
+
 int nw_json_from_file(const char *filename,
                       json_object *object,
                       const char *key)
 {
-  return -1;
+  char tmp[1024];
+  FILE *file = fopen(filename, "r");
+  if (!file)
+    return -1;
+
+  char *buffer = NULL;
+  size_t buffer_len = 0;
+  while (!feof(file)) {
+    size_t n = fread(tmp, 1, sizeof(tmp), file);
+    buffer_len += n;
+    char *tbuffer = (char*) realloc(buffer, buffer_len + 1);
+    if (!tbuffer) {
+      free(buffer);
+      return -1;
+    }
+    buffer = tbuffer;
+
+    memcpy(buffer, tmp, n);
+  }
+  fclose(file);
+
+  buffer[buffer_len] = 0;
+  json_object_object_add(object, key, json_object_new_string(trim_string(buffer)));
+  free(buffer);
+  return 0;
 }

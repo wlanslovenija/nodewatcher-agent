@@ -37,6 +37,15 @@ int nw_json_from_uci(struct uci_context *uci,
                      json_object *object,
                      const char *key);
 
+/**
+ * Opens a file and stores the contents into the specified JSON
+ * object under the specified key.
+ *
+ * @param filename Filename
+ * @param object Destination JSON object
+ * @param key Key in JSON object
+ * @return 0 on success, -1 on failure
+ */
 int nw_json_from_file(const char *filename,
                       json_object *object,
                       const char *key);
