@@ -21,6 +21,7 @@
 
 #include <json/json.h>
 #include <uci.h>
+#include <libubox/blobmsg.h>
 
 /**
  * Looks up an UCI location and stores the retrieved value into
@@ -49,5 +50,16 @@ int nw_json_from_uci(struct uci_context *uci,
 int nw_json_from_file(const char *filename,
                       json_object *object,
                       const char *key);
+
+/**
+ * Converts a blob to JSON objects.
+ *
+ * @param attr Blob
+ * @param table True if blob is a table
+ * @param object Destination JSON object
+ */
+void nw_json_from_blob(struct blob_attr *attr,
+                       bool table,
+                       json_object **object);
 
 #endif

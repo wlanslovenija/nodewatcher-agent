@@ -94,3 +94,64 @@ int nw_json_from_file(const char *filename,
   free(buffer);
   return 0;
 }
+
+/* Forward declaration */
+static void nw_json_from_blob_element(struct blob_attr *attr,
+                                      json_object **object);
+
+static void nw_json_from_blob_list(struct blob_attr *attr,
+                                   int len,
+                                   bool array,
+                                   json_object **object)
+{
+  struct blob_attr *pos;
+  int rem = len;
+
+  if (array)
+    *object = json_object_new_array();
+  else
+    *object = json_object_new_object();
+
+  __blob_for_each_attr(pos, attr, rem) {
+    json_object *e = NULL;
+    nw_json_from_blob_element(pos, &e);
+    if (array)
+      json_object_array_add(*object, e);
+    else
+      json_object_object_add(*object, blobmsg_name(pos), e);
+  }
+}
+
+static void nw_json_from_blob_element(struct blob_attr *attr,
+                                      json_object **object)
+{
+  void *data;
+  int len;
+
+  if (!blobmsg_check_attr(attr, false))
+    return;
+
+  data = blobmsg_data(attr);
+  len = blobmsg_data_len(attr);
+
+  switch (blob_id(attr)) {
+    case BLOBMSG_TYPE_UNSPEC: *object = NULL; break;
+    case BLOBMSG_TYPE_BOOL: *object = json_object_new_boolean(*(uint8_t *) data ? true : false); break;
+    case BLOBMSG_TYPE_INT16: *object = json_object_new_int(be16_to_cpu(*(uint16_t *) data)); break;
+    case BLOBMSG_TYPE_INT32: *object = json_object_new_int((int32_t) be32_to_cpu(*(uint32_t *) data)); break;
+    case BLOBMSG_TYPE_INT64: *object = json_object_new_int64((int64_t) be64_to_cpu(*(uint64_t *) data)); break;
+    case BLOBMSG_TYPE_STRING: *object = json_object_new_string(data); break;
+    case BLOBMSG_TYPE_ARRAY: nw_json_from_blob_list(data, len, true, object); break;
+    case BLOBMSG_TYPE_TABLE: nw_json_from_blob_list(data, len, false, object); break;
+  }
+}
+
+void nw_json_from_blob(struct blob_attr *attr,
+                       bool table,
+                       json_object **object)
+{
+  if (table)
+    nw_json_from_blob_list(blobmsg_data(attr), blobmsg_data_len(attr), false, object);
+  else
+    nw_json_from_blob_element(attr, object);
+}
