@@ -155,3 +155,14 @@ void nw_json_from_blob(struct blob_attr *attr,
   else
     nw_json_from_blob_element(attr, object);
 }
+
+void nw_json_from_ubus(struct ubus_request *req,
+                       int type,
+                       struct blob_attr *msg)
+{
+  if (!msg)
+    return;
+
+  /* Convert the response to JSON objects */
+  nw_json_from_blob(msg, true, (json_object**) req->priv);
+}

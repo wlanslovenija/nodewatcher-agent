@@ -23,25 +23,6 @@
 #include <uci.h>
 #include <syslog.h>
 
-static void nw_interfaces_handle_netifd(struct ubus_request *req,
-                                        int type,
-                                        struct blob_attr *msg)
-{
-  if (!msg)
-    return;
-
-  /* Convert the response to JSON objects */
-  nw_json_from_blob(msg, true, (json_object**) req->priv);
-}
-
-#define NW_COPY_JSON_OBJECT(src, src_key, dst, dst_key) \
-  { \
-    json_object *tmp; \
-    json_object_object_get_ex((src), src_key, &tmp); \
-    if (tmp) \
-      json_object_object_add((dst), dst_key, json_object_get(tmp)); \
-  }
-
 static bool nw_interfaces_process_device(struct ubus_context *ubus,
                                          const char *ifname,
                                          const char *devname,
@@ -61,15 +42,17 @@ static bool nw_interfaces_process_device(struct ubus_context *ubus,
 
   /* Request detailed device statistics */
   uint32_t ubus_id;
-  if (ubus_lookup_id(ubus, "network.device", &ubus_id))
+  if (ubus_lookup_id(ubus, "network.device", &ubus_id)) {
+    syslog(LOG_WARNING, "interfaces: Failed to find netifd object 'network.device'!");
     goto data_error;
+  }
 
   json_object *data = NULL;
   static struct blob_buf req;
   blob_buf_init(&req, 0);
   blobmsg_add_string(&req, "name", devname);
 
-  if (ubus_invoke(ubus, ubus_id, "status", req.head, nw_interfaces_handle_netifd, &data, 500) != UBUS_STATUS_OK)
+  if (ubus_invoke(ubus, ubus_id, "status", req.head, nw_json_from_ubus, &data, 500) != UBUS_STATUS_OK)
     goto data_error;
   if (!data)
     goto data_error;
@@ -113,14 +96,16 @@ static bool nw_interfaces_process_interface(struct ubus_context *ubus,
   snprintf(ubus_path, sizeof(ubus_path), "network.interface.%s", ifname);
 
   uint32_t ubus_id;
-  if (ubus_lookup_id(ubus, ubus_path, &ubus_id))
+  if (ubus_lookup_id(ubus, ubus_path, &ubus_id)) {
+    syslog(LOG_WARNING, "interfaces: Failed to find netifd object '%s'!", ubus_path);
     return false;
+  }
 
   /* Prepare and send a request */
   json_object *data = NULL;
   static struct blob_buf req;
   blob_buf_init(&req, 0);
-  if (ubus_invoke(ubus, ubus_id, "status", req.head, nw_interfaces_handle_netifd, &data, 500) != UBUS_STATUS_OK)
+  if (ubus_invoke(ubus, ubus_id, "status", req.head, nw_json_from_ubus, &data, 500) != UBUS_STATUS_OK)
     return false;
   if (!data)
     goto data_error;

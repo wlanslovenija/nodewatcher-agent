@@ -75,7 +75,7 @@ endif()
 if(WIRELESS_MODULE)
   set(MODULES ${MODULES} wireless_module)
   add_library(wireless_module MODULE modules/wireless.c)
-  target_link_libraries(wireless_module ubox uci nodewatcher-agent-common)
+  target_link_libraries(wireless_module ubox uci iwinfo nodewatcher-agent-common)
   set_target_properties(wireless_module PROPERTIES OUTPUT_NAME wireless PREFIX "")
 endif()
 

@@ -22,6 +22,7 @@
 #include <json/json.h>
 #include <uci.h>
 #include <libubox/blobmsg.h>
+#include <libubus.h>
 
 /**
  * Looks up an UCI location and stores the retrieved value into
@@ -61,5 +62,23 @@ int nw_json_from_file(const char *filename,
 void nw_json_from_blob(struct blob_attr *attr,
                        bool table,
                        json_object **object);
+
+/**
+ * This function can be used as an ubus response callback to convert
+ * the response into JSON structure. The request's priv attribute
+ * should be of type json_object** (destination JSON object address).
+ */
+void nw_json_from_ubus(struct ubus_request *req,
+                       int type,
+                       struct blob_attr *msg);
+
+/* Macro to simplify copying of JSON attributes */
+#define NW_COPY_JSON_OBJECT(src, src_key, dst, dst_key) \
+  { \
+    json_object *tmp; \
+    json_object_object_get_ex((src), src_key, &tmp); \
+    if (tmp) \
+      json_object_object_add((dst), dst_key, json_object_get(tmp)); \
+  }
 
 #endif
