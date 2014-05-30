@@ -67,10 +67,10 @@ modules which are loaded as shared library plugins. On startup modules are autom
 discovered from ``/usr/lib/nodewatcher-agent``. Currently the following modules are
 implemented:
 
-  * ``core.general`` provides general information about the running system such as the node's uuid, hostname, kernel and firmware versions, etc.
+* ``core.general`` provides general information about the running system such as the node's uuid, hostname, kernel and firmware versions, etc.
 
-  * ``core.resources`` provides system resource usage information such as the amount of memory used, the number and type of running processes, load averages, CPU usage and number of tracker connections.
+* ``core.resources`` provides system resource usage information such as the amount of memory used, the number and type of running processes, load averages, CPU usage and number of tracker connections.
 
-  * ``core.interfaces`` reports status and statistics for network interfaces configured via UCI
+* ``core.interfaces`` reports status and statistics for network interfaces configured via UCI
 
-  * ``core.wireless`` provides additional information for wireless interfaces
+* ``core.wireless`` provides additional information for wireless interfaces
