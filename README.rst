@@ -46,9 +46,13 @@ To output monitoring data, JSON format is used as in the following example:
       'uuid': '64840ad9-aac1-4494-b4d1-9de5d8cbedd9',
       'hostname': 'test-4',
       'version': 'git.12f427d',
+      'kernel': '3.10.36',
       'local_time': 1401093621,
       'uptime': 4612,
-      'machine': 'TP-LINK TL-WR1043ND'
+      'hardware': {
+        'board': 'tl-wr741nd-v4',
+        'model': 'TP-Link TL-WR740N/ND v4'
+      }
     }
   }
 

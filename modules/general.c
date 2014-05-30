@@ -20,17 +20,26 @@
 #include <nodewatcher-agent/json.h>
 #include <nodewatcher-agent/utils.h>
 
+#include <sys/utsname.h>
+
 static int nw_general_start_acquire_data(struct nodewatcher_module *module,
                                          struct ubus_context *ubus,
                                          struct uci_context *uci)
 {
+  static char buffer[1024];
+
   json_object *object = json_object_new_object();
   /* UUID */
   nw_json_from_uci(uci, "system.@system[0].uuid", object, "uuid");
   /* Hostname */
   nw_json_from_uci(uci, "system.@system[0].hostname", object, "hostname");
-  /* Firmware version */
+  /* Nodewatcher firmware version */
   nw_json_from_file("/etc/version", object, "version");
+  /* Kernel version */
+  struct utsname uts;
+  if (uname(&uts) >= 0) {
+    json_object_object_add(object, "kernel", json_object_new_string(uts.release));
+  }
   /* Local UNIX time */
   json_object_object_add(object, "local_time", json_object_new_int(time(NULL)));
   /* Uptime in seconds */
@@ -42,22 +51,36 @@ static int nw_general_start_acquire_data(struct nodewatcher_module *module,
     fclose(uptime_file);
   }
 
-  /* Machine identifier from /proc/cpuinfo */
-  FILE *cpuinfo_file = fopen("/proc/cpuinfo", "r");
-  if (cpuinfo_file) {
-    while (!feof(cpuinfo_file)) {
-      char key[128];
-      char value[1024];
-
-      if (fscanf(cpuinfo_file, "%127[^:]%*c%1023[^\n]", key, value) == 2) {
-        if (strcmp(nw_string_trim(key), "machine") == 0) {
-          json_object_object_add(object, "machine", json_object_new_string(nw_string_trim(value)));
-          break;
+  /* Hardware information */
+  json_object *hardware = json_object_new_object();
+  FILE *board_file = fopen("/tmp/sysinfo/board_name", "r");
+  if (board_file) {
+    if (fscanf(board_file, "%1023[^\n]", buffer) == 1)
+      json_object_object_add(hardware, "board", json_object_new_string(buffer));
+    fclose(board_file);
+  }
+  FILE *model_file = fopen("/tmp/sysinfo/model", "r");
+  if (model_file) {
+    if (fscanf(model_file, "%1023[^\n]", buffer) == 1)
+      json_object_object_add(hardware, "model", json_object_new_string(buffer));
+    fclose(model_file);
+  } else {
+    /* If the model file does not exist, extract information from /proc/cpuinfo */
+    FILE *cpuinfo_file = fopen("/proc/cpuinfo", "r");
+    if (cpuinfo_file) {
+      while (!feof(cpuinfo_file)) {
+        char key[128];
+        if (fscanf(cpuinfo_file, "%127[^:]%*c%1023[^\n]", key, buffer) == 2) {
+          if (strcmp(nw_string_trim(key), "machine") == 0) {
+            json_object_object_add(hardware, "model", json_object_new_string(nw_string_trim(buffer)));
+            break;
+          }
         }
       }
+      fclose(cpuinfo_file);
     }
-    fclose(cpuinfo_file);
   }
+  json_object_object_add(object, "hardware", hardware);
 
   /* Store resulting JSON object */
   return nw_module_finish_acquire_data(module, object);
