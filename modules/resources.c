@@ -173,7 +173,7 @@ static int nw_resources_init(struct nodewatcher_module *module, struct ubus_cont
 struct nodewatcher_module nw_module = {
   .name = "core.resources",
   .author = "Jernej Kos <jernej@kos.mx>",
-  .version = 1,
+  .version = 2,
   .hooks = {
     .init               = nw_resources_init,
     .start_acquire_data = nw_resources_start_acquire_data,

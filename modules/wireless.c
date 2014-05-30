@@ -152,7 +152,7 @@ static int nw_wireless_init(struct nodewatcher_module *module, struct ubus_conte
 struct nodewatcher_module nw_module = {
   .name = "core.wireless",
   .author = "Jernej Kos <jernej@kos.mx>",
-  .version = 1,
+  .version = 3,
   .hooks = {
     .init               = nw_wireless_init,
     .start_acquire_data = nw_wireless_start_acquire_data,

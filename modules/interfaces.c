@@ -203,7 +203,7 @@ static int nw_interfaces_init(struct nodewatcher_module *module, struct ubus_con
 struct nodewatcher_module nw_module = {
   .name = "core.interfaces",
   .author = "Jernej Kos <jernej@kos.mx>",
-  .version = 1,
+  .version = 3,
   .hooks = {
     .init               = nw_interfaces_init,
     .start_acquire_data = nw_interfaces_start_acquire_data,
