@@ -27,6 +27,7 @@
 
 #include <nodewatcher-agent/module.h>
 #include <nodewatcher-agent/scheduler.h>
+#include <nodewatcher-agent/output.h>
 
 /* Global ubus connection context */
 static struct ubus_context *ubus;
@@ -92,6 +93,12 @@ int main(int argc, char **argv)
   /* Initialize the scheduler */
   if (nw_scheduler_init() != 0) {
     fprintf(stderr, "ERROR: Unable to initialize scheduler!\n");
+    return -1;
+  }
+
+  /* Initialize the output exporter */
+  if (nw_output_init(uci) != 0) {
+    fprintf(stderr, "ERROR: Unable to initialize output exporter!\n");
     return -1;
   }
 

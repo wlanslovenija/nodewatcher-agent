@@ -36,6 +36,7 @@ set(COMMON_SOURCES
   common/scheduler.c
   common/json.c
   common/utils.c
+  common/output.c
 )
 add_library(nodewatcher-agent-common SHARED ${COMMON_SOURCES})
 target_link_libraries(nodewatcher-agent-common ${LIBS})

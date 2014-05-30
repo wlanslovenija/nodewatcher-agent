@@ -18,6 +18,7 @@
  */
 #include <nodewatcher-agent/module.h>
 #include <nodewatcher-agent/scheduler.h>
+#include <nodewatcher-agent/output.h>
 
 #include <libubox/avl-cmp.h>
 #include <libubox/blobmsg_json.h>
@@ -186,6 +187,23 @@ int nw_module_start_acquire_data(struct nodewatcher_module *module)
   return module->hooks.start_acquire_data(module, module_ubus, module_uci);
 }
 
+static void nw_module_export_all()
+{
+  if (!nw_output_is_exporting())
+    return;
+
+  /* Iterate through all modules and add content */
+  struct nodewatcher_module *module;
+  json_object *object = json_object_new_object();
+
+  avl_for_each_element(&module_registry, module, avl) {
+    json_object_object_add(object, module->name, json_object_get(module->data));
+  }
+
+  nw_output_export(object);
+  json_object_put(object);
+}
+
 int nw_module_finish_acquire_data(struct nodewatcher_module *module, json_object *object)
 {
   /* Update module data */
@@ -200,6 +218,9 @@ int nw_module_finish_acquire_data(struct nodewatcher_module *module, json_object
   /* Reschedule module */
   module->sched_status = NW_MODULE_NONE;
   nw_scheduler_schedule_module(module);
+
+  /* Export module data */
+  nw_module_export_all();
 
   return 0;
 }
