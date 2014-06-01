@@ -37,7 +37,7 @@ static bool nw_interfaces_process_device(struct ubus_context *ubus,
     json_object_object_add(device, "parent", json_object_new_string(parent));
 
   /* Include addresses (can be NULL) */
-  if (addresses)
+  if (addresses && json_object_array_length(addresses) > 0)
     json_object_object_add(device, "addresses", json_object_get(addresses));
 
   /* Request detailed device statistics */
@@ -83,6 +83,7 @@ static bool nw_interfaces_process_device(struct ubus_context *ubus,
   return true;
 
 data_error:
+  syslog(LOG_WARNING, "interfaces: Failed to parse netifd device data!");
   json_object_put(device);
   return false;
 }
@@ -105,16 +106,22 @@ static bool nw_interfaces_process_interface(struct ubus_context *ubus,
   json_object *data = NULL;
   static struct blob_buf req;
   blob_buf_init(&req, 0);
-  if (ubus_invoke(ubus, ubus_id, "status", req.head, nw_json_from_ubus, &data, 500) != UBUS_STATUS_OK)
+  if (ubus_invoke(ubus, ubus_id, "status", req.head, nw_json_from_ubus, &data, 500) != UBUS_STATUS_OK) {
+    syslog(LOG_WARNING, "interfaces: Failed to request status from netifd object '%s'!", ubus_path);
     return false;
-  if (!data)
-    goto data_error;
+  }
+  if (!data) {
+    syslog(LOG_WARNING, "interfaces: Failed to parse netifd interface data!");
+    return false;
+  }
 
   /* Extract underlying network device */
   json_object *device = NULL;
   json_object_object_get_ex(data, "device", &device);
-  if (!device)
+  if (!device) {
+    syslog(LOG_WARNING, "interfaces: Failed to parse netifd interface data '%s' (device name not found)!", ubus_path);
     goto data_error;
+  }
 
   /* Parse interface addresses as they are not available per-device */
   int i;
@@ -122,30 +129,34 @@ static bool nw_interfaces_process_interface(struct ubus_context *ubus,
   /* Add IPv4 addresses */
   json_object *ipv4 = NULL;
   json_object_object_get_ex(data, "ipv4-address", &ipv4);
-  for (i = 0; i < json_object_array_length(ipv4); i++) {
-    json_object *address = json_object_new_object();
-    /* Set address type */
-    json_object_object_add(address, "family", json_object_new_string("ipv4"));
-    /* Copy interface address */
-    json_object *a = json_object_array_get_idx(ipv4, i);
-    NW_COPY_JSON_OBJECT(a, "address", address, "address");
-    NW_COPY_JSON_OBJECT(a, "mask", address, "mask");
+  if (ipv4) {
+    for (i = 0; i < json_object_array_length(ipv4); i++) {
+      json_object *address = json_object_new_object();
+      /* Set address type */
+      json_object_object_add(address, "family", json_object_new_string("ipv4"));
+      /* Copy interface address */
+      json_object *a = json_object_array_get_idx(ipv4, i);
+      NW_COPY_JSON_OBJECT(a, "address", address, "address");
+      NW_COPY_JSON_OBJECT(a, "mask", address, "mask");
 
-    json_object_array_add(addresses, address);
+      json_object_array_add(addresses, address);
+    }
   }
   /* Add IPv6 addresses */
   json_object *ipv6 = NULL;
   json_object_object_get_ex(data, "ipv6-address", &ipv6);
-  for (i = 0; i < json_object_array_length(ipv6); i++) {
-    json_object *address = json_object_new_object();
-    /* Set address type */
-    json_object_object_add(address, "family", json_object_new_string("ipv6"));
-    /* Copy interface address */
-    json_object *a = json_object_array_get_idx(ipv6, i);
-    NW_COPY_JSON_OBJECT(a, "address", address, "address");
-    NW_COPY_JSON_OBJECT(a, "mask", address, "mask");
+  if (ipv6) {
+    for (i = 0; i < json_object_array_length(ipv6); i++) {
+      json_object *address = json_object_new_object();
+      /* Set address type */
+      json_object_object_add(address, "family", json_object_new_string("ipv6"));
+      /* Copy interface address */
+      json_object *a = json_object_array_get_idx(ipv6, i);
+      NW_COPY_JSON_OBJECT(a, "address", address, "address");
+      NW_COPY_JSON_OBJECT(a, "mask", address, "mask");
 
-    json_object_array_add(addresses, address);
+      json_object_array_add(addresses, address);
+    }
   }
 
   /* Process the individual device */
@@ -159,7 +170,6 @@ static bool nw_interfaces_process_interface(struct ubus_context *ubus,
 data_error_free_addresses:
   json_object_put(addresses);
 data_error:
-  syslog(LOG_WARNING, "interfaces: Failed to parse netifd interface data!");
   if (data)
     json_object_put(data);
   return false;
