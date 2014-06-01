@@ -37,10 +37,10 @@ static int nw_resources_start_acquire_data(struct nodewatcher_module *module,
   if (loadavg_file) {
     char load1min[16], load5min[16], load15min[16];
     if (fscanf(loadavg_file, "%15s %15s %15s", load1min, load5min, load15min) == 3) {
-      json_object *load_average = json_object_new_object();
-      json_object_object_add(load_average, "avg1", json_object_new_string(load1min));
-      json_object_object_add(load_average, "avg5", json_object_new_string(load5min));
-      json_object_object_add(load_average, "avg15", json_object_new_string(load15min));
+      json_object *load_average = json_object_new_array();
+      json_object_array_add(load_average, json_object_new_string(load1min));
+      json_object_array_add(load_average, json_object_new_string(load5min));
+      json_object_array_add(load_average, json_object_new_string(load15min));
       json_object_object_add(object, "load_average", load_average);
     }
     fclose(loadavg_file);
