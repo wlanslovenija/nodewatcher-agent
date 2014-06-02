@@ -79,9 +79,23 @@ static bool nw_wireless_process_interface(const char *ifname,
 
   nw_wireless_call_int(interface, ifname, "bitrate", iwinfo->bitrate, NULL);
 
+  /* Protocols */
+  int modes;
+  if (!iwinfo->hwmodelist(ifname, &modes)) {
+    json_object *protocols = json_object_new_array();
+    if (modes & IWINFO_80211_A)
+      json_object_array_add(protocols, json_object_new_string("a"));
+    if (modes & IWINFO_80211_B)
+      json_object_array_add(protocols, json_object_new_string("b"));
+    if (modes & IWINFO_80211_G)
+      json_object_array_add(protocols, json_object_new_string("g"));
+    if (modes & IWINFO_80211_N)
+      json_object_array_add(protocols, json_object_new_string("n"));
+    json_object_object_add(interface, "protocols", protocols);
+  }
+
   /* TODO: channel width (currently not supported in iwinfo!) */
   /* TODO: encryption */
-  /* TODO: hwmodes */
   /* TODO: survey*/
 
   json_object_object_add(object, ifname, interface);
