@@ -22,6 +22,10 @@
 
 #include <uci.h>
 #include <syslog.h>
+#include <stdint.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 static bool nw_interfaces_process_device(struct ubus_context *ubus,
                                          const char *ifname,
@@ -59,7 +63,31 @@ static bool nw_interfaces_process_device(struct ubus_context *ubus,
 
   /* XXX: Currently, MAC address of wireless interfaces is not reported because
           of a bug in netifd. See OpenWrt ticket #16633. */
-  NW_COPY_JSON_OBJECT(data, "macaddr", device, "mac");
+  json_object *mac;
+  json_object_object_get_ex(data, "macaddr", &mac);
+  if (mac) {
+    json_object_object_add(device, "mac", json_object_get(mac));
+  } else {
+    /* Manually try to obtain a device's MAC address via ioctl */
+    struct ifreq ifr;
+    int fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
+
+    if (fd != -1) {
+      memset(&ifr, 0, sizeof(ifr));
+      strncpy(ifr.ifr_name, devname, sizeof(ifr.ifr_name));
+
+      if (ioctl(fd, SIOCGIFHWADDR, &ifr) == 0) {
+        char mac_address[18] = {0, };
+        snprintf(mac_address, sizeof(mac_address), "%02x:%02x:%02x:%02x:%02x:%02x",
+          (uint8_t) ifr.ifr_hwaddr.sa_data[0], (uint8_t) ifr.ifr_hwaddr.sa_data[1],
+          (uint8_t) ifr.ifr_hwaddr.sa_data[2], (uint8_t) ifr.ifr_hwaddr.sa_data[3],
+          (uint8_t) ifr.ifr_hwaddr.sa_data[4], (uint8_t) ifr.ifr_hwaddr.sa_data[5]);
+
+        json_object_object_add(device, "mac", json_object_new_string(mac_address));
+      }
+    }
+  }
+
   NW_COPY_JSON_OBJECT(data, "mtu", device, "mtu");
   NW_COPY_JSON_OBJECT(data, "up", device, "up");
   NW_COPY_JSON_OBJECT(data, "carrier", device, "carrier");
