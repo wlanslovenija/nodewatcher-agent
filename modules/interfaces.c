@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <unistd.h>
 
 static bool nw_interfaces_process_device(struct ubus_context *ubus,
                                          const char *ifname,
