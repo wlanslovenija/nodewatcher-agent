@@ -85,6 +85,8 @@ static bool nw_interfaces_process_device(struct ubus_context *ubus,
 
         json_object_object_add(device, "mac", json_object_new_string(mac_address));
       }
+
+      close(fd);
     }
   }
 
