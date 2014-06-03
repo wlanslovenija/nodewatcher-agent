@@ -71,6 +71,8 @@ implemented:
 
 * ``core.resources`` provides system resource usage information such as the amount of memory used, the number and type of running processes, load averages, CPU usage and number of tracker connections.
 
-* ``core.interfaces`` reports status and statistics for network interfaces configured via UCI
+* ``core.interfaces`` reports status and statistics for network interfaces configured via UCI.
 
-* ``core.wireless`` provides additional information for wireless interfaces
+* ``core.wireless`` provides additional information for wireless interfaces.
+
+* ``core.keys.ssh`` provides information about the node's host SSH keys.
