@@ -76,3 +76,5 @@ implemented:
 * ``core.wireless`` provides additional information for wireless interfaces.
 
 * ``core.keys.ssh`` provides information about the node's host SSH keys.
+
+* ``core.clients`` provides information about the clients currently connected with the node, obtained from DHCP leases file.
