@@ -19,6 +19,8 @@
 #ifndef NODEWATCHER_AGENT_UTILS_H
 #define NODEWATCHER_AGENT_UTILS_H
 
+#include <stddef.h>
+
 /**
  * Trims a string of whitespace characters. The original string
  * memory is modified but no copy is made. This means that the
@@ -37,5 +39,16 @@ char *nw_string_trim(char *str);
  * @return Number of lines on success, -1 on failure
  */
 int nw_file_line_count(const char *filename);
+
+/**
+ * Encodes data as Base64.
+ *
+ * @param data Input data to encode
+ * @param data_length Length of input data
+ * @param result Output buffer
+ * @param result_length Length of output buffer
+ * @return 0 on success, -1 on failure
+ */
+int nw_base64_encode(const void *data, size_t data_length, char *result, size_t result_length);
 
 #endif

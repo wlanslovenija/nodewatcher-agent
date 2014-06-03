@@ -9,6 +9,7 @@ option(INTERFACES_MODULE "Interfaces module support" ON)
 option(WIRELESS_MODULE "Wireless module support" ON)
 option(KEYS_SSH_MODULE "SSH keys module support" ON)
 option(PACKAGES_MODULE "Packages module support" ON)
+option(CLIENTS_MODULE "Clients module support" ON)
 
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
@@ -94,6 +95,14 @@ if(PACKAGES_MODULE)
   add_library(packages_module MODULE modules/packages.c)
   target_link_libraries(packages_module ubox uci nodewatcher-agent-common)
   set_target_properties(packages_module PROPERTIES OUTPUT_NAME packages PREFIX "")
+endif()
+
+# Clients module
+if(CLIENTS_MODULE)
+  set(MODULES ${MODULES} clients_module)
+  add_library(clients_module MODULE modules/clients.c)
+  target_link_libraries(clients_module ubox uci nodewatcher-agent-common)
+  set_target_properties(clients_module PROPERTIES OUTPUT_NAME clients PREFIX "")
 endif()
 
 install(TARGETS nodewatcher-agent nodewatcher-agent-common ${MODULES}
