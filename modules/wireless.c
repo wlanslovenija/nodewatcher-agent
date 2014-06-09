@@ -52,6 +52,88 @@ static void nw_wireless_call_int(json_object *object,
   }
 }
 
+static void nw_wireless_add_encryption(json_object *object,
+                                       const char *key,
+                                       struct iwinfo_crypto_entry *entry)
+{
+  json_object *encryption = json_object_new_object();
+
+  json_object_object_add(encryption, "enabled", json_object_new_boolean(entry->enabled));
+
+  if (entry->enabled) {
+    if (!entry->wpa_version) {
+      /* WEP */
+      json_object *wep = json_object_new_array();
+
+      if (entry->auth_algs & IWINFO_AUTH_OPEN)
+        json_object_array_add(wep, json_object_new_string("open"));
+
+      if (entry->auth_algs & IWINFO_AUTH_SHARED)
+        json_object_array_add(wep, json_object_new_string("shared"));
+
+      json_object_object_add(encryption, "wep", wep);
+    } else {
+      /* WPA */
+      json_object *wpa = json_object_new_array();
+
+      if (entry->wpa_version > 2) {
+        json_object_array_add(wpa, json_object_new_int(1));
+        json_object_array_add(wpa, json_object_new_int(2));
+      } else {
+        json_object_array_add(wpa, json_object_new_int(entry->wpa_version));
+      }
+
+      json_object_object_add(encryption, "wpa", wpa);
+
+      /* Authentication details */
+      json_object *authentication = json_object_new_array();
+
+      if (entry->auth_suites & IWINFO_KMGMT_PSK)
+        json_object_array_add(authentication, json_object_new_string("psk"));
+
+      if (entry->auth_suites & IWINFO_KMGMT_8021x)
+        json_object_array_add(authentication, json_object_new_string("802.1x"));
+
+      if (!entry->auth_suites  || entry->auth_suites & IWINFO_KMGMT_NONE)
+        json_object_array_add(authentication, json_object_new_string("none"));
+
+      json_object_object_add(encryption, "authentication", authentication);
+    }
+
+    /* Ciphers */
+    json_object *ciphers = json_object_new_array();
+    int ciph = entry->pair_ciphers | entry->group_ciphers;
+
+    if (ciph & IWINFO_CIPHER_WEP40)
+      json_object_array_add(ciphers, json_object_new_string("wep-40"));
+
+    if (ciph & IWINFO_CIPHER_WEP104)
+      json_object_array_add(ciphers, json_object_new_string("wep-104"));
+
+    if (ciph & IWINFO_CIPHER_TKIP)
+      json_object_array_add(ciphers, json_object_new_string("tkip"));
+
+    if (ciph & IWINFO_CIPHER_CCMP)
+      json_object_array_add(ciphers, json_object_new_string("ccmp"));
+
+    if (ciph & IWINFO_CIPHER_WRAP)
+      json_object_array_add(ciphers, json_object_new_string("wrap"));
+
+    if (ciph & IWINFO_CIPHER_AESOCB)
+      json_object_array_add(ciphers, json_object_new_string("aes-ocb"));
+
+    if (ciph & IWINFO_CIPHER_CKIP)
+      json_object_array_add(ciphers, json_object_new_string("ckip"));
+
+    if (!ciph || ciph & IWINFO_CIPHER_NONE)
+      json_object_array_add(ciphers, json_object_new_string("none"));
+
+    json_object_object_add(encryption, "ciphers", ciphers);
+  }
+
+  json_object_object_add(object, key, encryption);
+}
+
 static bool nw_wireless_process_interface(const char *ifname,
                                           json_object *object)
 {
@@ -95,10 +177,69 @@ static bool nw_wireless_process_interface(const char *ifname,
   }
 
   /* TODO: channel width (currently not supported in iwinfo!) */
-  /* TODO: encryption */
-  /* TODO: survey*/
+
+  /* Encryption */
+  struct iwinfo_crypto_entry crypto = { 0, };
+  if (!iwinfo->encryption(ifname, (char*) &crypto)) {
+    nw_wireless_add_encryption(interface, "encryption", &crypto);
+  }
 
   json_object_object_add(object, ifname, interface);
+
+  iwinfo = NULL;
+  iwinfo_finish();
+  return true;
+}
+
+static bool nw_wireless_process_radio(const char *phyname,
+                                      const char *ifname,
+                                      json_object *object)
+{
+  /* Initialize iwinfo backend for this device */
+  static const struct iwinfo_ops *iwinfo;
+  iwinfo = iwinfo_backend(ifname);
+  if (!iwinfo)
+    return false;
+
+  json_object *radio = json_object_new_object();
+
+  /* Wireless network survey */
+  char result[IWINFO_BUFSIZE];
+  int len, i;
+  if (!iwinfo->scanlist(ifname, result, &len) && len > 0) {
+    json_object *survey = json_object_new_array();
+    for (i = 0; i < len; i += sizeof(struct iwinfo_scanlist_entry)) {
+      json_object *network = json_object_new_object();
+      struct iwinfo_scanlist_entry *entry = (struct iwinfo_scanlist_entry*) &result[i];
+
+      /* SSID */
+      if (entry->ssid[0])
+        json_object_object_add(network, "ssid", json_object_new_string((const char*) entry->ssid));
+
+      /* BSSID */
+      char mac[18];
+      snprintf(mac, sizeof(mac), "%02X:%02X:%02X:%02X:%02X:%02X",
+        entry->mac[0], entry->mac[1], entry->mac[2],
+        entry->mac[3], entry->mac[4], entry->mac[5]);
+
+      json_object_object_add(network, "bssid", json_object_new_string(mac));
+
+      /* Mode */
+      json_object_object_add(network, "mode", json_object_new_string(IWINFO_OPMODE_NAMES[entry->mode]));
+      /* Channel */
+      json_object_object_add(network, "channel", json_object_new_int(entry->channel));
+      /* Signal */
+      json_object_object_add(network, "signal", json_object_new_int((uint32_t) (entry->signal - 0x100)));
+      /* Encryption */
+      nw_wireless_add_encryption(network, "encryption", &entry->crypto);
+
+      json_object_array_add(survey, network);
+    }
+
+    json_object_object_add(radio, "survey", survey);
+  }
+
+  json_object_object_add(object, phyname, radio);
 
   iwinfo = NULL;
   iwinfo_finish();
@@ -131,24 +272,37 @@ static int nw_wireless_start_acquire_data(struct nodewatcher_module *module,
     return nw_module_finish_acquire_data(module, object);
   }
 
+  json_object *interfaces = json_object_new_object();
+  json_object *radios = json_object_new_object();
+
   /* Iterate over the list of radios */
   json_object_object_foreach(data, key, val) {
-    json_object *interfaces = NULL;
-    json_object_object_get_ex(val, "interfaces", &interfaces);
-    if (!interfaces)
+    json_object *ninterfaces = NULL;
+    json_object_object_get_ex(val, "interfaces", &ninterfaces);
+    if (!ninterfaces)
       continue;
 
+    /* Process interfaces */
+    const char *first_radio_iface = NULL;
     int i;
-    for (i = 0; i < json_object_array_length(interfaces); i++) {
-      json_object *interface = json_object_array_get_idx(interfaces, i);
+    for (i = 0; i < json_object_array_length(ninterfaces); i++) {
+      json_object *interface = json_object_array_get_idx(ninterfaces, i);
       json_object *ifname = NULL;
       json_object_object_get_ex(interface, "ifname", &ifname);
       if (!ifname)
         continue;
 
-      nw_wireless_process_interface(json_object_get_string(ifname), object);
+      nw_wireless_process_interface(json_object_get_string(ifname), interfaces);
+      if (!first_radio_iface)
+        first_radio_iface = json_object_get_string(ifname);
     }
+
+    /* Process radio */
+    nw_wireless_process_radio(key, first_radio_iface, radios);
   }
+
+  json_object_object_add(object, "interfaces", interfaces);
+  json_object_object_add(object, "radios", radios);
 
   /* Free data */
   json_object_put(data);
