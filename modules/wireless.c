@@ -25,6 +25,11 @@
 #include <iwinfo.h>
 #include <iwinfo/utils.h>
 
+/* Results of last scan survey */
+static json_object *last_scan_survey = NULL;
+/* Number of monitoring intervals */
+static int counter_monitor_intervals = 0;
+
 static void nw_wireless_call_str(json_object *object,
                                  const char *ifname,
                                  const char *key,
@@ -275,6 +280,13 @@ static int nw_wireless_start_acquire_data(struct nodewatcher_module *module,
   json_object *interfaces = json_object_new_object();
   json_object *radios = json_object_new_object();
 
+  /* Limit radio scans to once every ~240 monitoring intervals */
+  bool new_radio_survey = false;
+  if (!last_scan_survey || ++counter_monitor_intervals >= nw_roughly(240)) {
+    new_radio_survey = true;
+    counter_monitor_intervals = 0;
+  }
+
   /* Iterate over the list of radios */
   json_object_object_foreach(data, key, val) {
     json_object *ninterfaces = NULL;
@@ -298,11 +310,21 @@ static int nw_wireless_start_acquire_data(struct nodewatcher_module *module,
     }
 
     /* Process radio */
-    nw_wireless_process_radio(key, first_radio_iface, radios);
+    if (new_radio_survey)
+      nw_wireless_process_radio(key, first_radio_iface, radios);
   }
 
   json_object_object_add(object, "interfaces", interfaces);
-  json_object_object_add(object, "radios", radios);
+  if (new_radio_survey) {
+    json_object_object_add(object, "radios", radios);
+    if (last_scan_survey != NULL)
+      json_object_put(last_scan_survey);
+
+    last_scan_survey = json_object_get(radios);
+  } else {
+    /* Just reuse previous survey */
+    json_object_object_add(object, "radios", json_object_get(last_scan_survey));
+  }
 
   /* Free data */
   json_object_put(data);
