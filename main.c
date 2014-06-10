@@ -24,10 +24,12 @@
 #include <syslog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 #include <nodewatcher-agent/module.h>
 #include <nodewatcher-agent/scheduler.h>
 #include <nodewatcher-agent/output.h>
+#include <nodewatcher-agent/utils.h>
 
 /* Global ubus connection context */
 static struct ubus_context *ubus;
@@ -64,6 +66,16 @@ int main(int argc, char **argv)
   /* Setup signal handlers */
   signal(SIGPIPE, SIG_IGN);
   /* TODO: Handle SIGHUP to reload? */
+
+  /* Seed random generator */
+  unsigned int seed;
+  int rc = nw_read_random_bytes(&seed, sizeof(seed));
+  if (rc < 0) {
+    fprintf(stderr, "ERROR: Failed to seed random generator!\n");
+    return -1;
+  }
+
+  srandom(seed);
 
   /* Initialize event loop */
   uloop_init();

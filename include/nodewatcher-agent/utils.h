@@ -51,4 +51,21 @@ int nw_file_line_count(const char *filename);
  */
 int nw_base64_encode(const void *data, size_t data_length, char *result, size_t result_length);
 
+/**
+ * Reads some random bytes and stores them in buf.
+ *
+ * @param buf Destination buffer
+ * @param len Number of bytes to read
+ * @return Number of bytes actually read or -1 on failure
+ */
+int nw_read_random_bytes(void *buf, size_t len);
+
+/**
+ * Returns a randomly modified value around the given value.
+ *
+ * @param value Input value
+ * @return Roughly the same value
+ */
+int nw_roughly(int value);
+
 #endif

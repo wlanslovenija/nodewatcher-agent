@@ -21,7 +21,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <inttypes.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 char *nw_string_trim(char *str)
 {
@@ -125,4 +130,32 @@ int nw_base64_encode(const void *data, size_t data_length, char *result, size_t 
 
   result[result_index] = 0;
   return 0;
+}
+
+int nw_read_random_bytes(void *buf, size_t len)
+{
+  int fd;
+  int rc;
+
+  fd = open("/dev/urandom", O_RDONLY);
+  if (fd < 0) {
+    rc = -1;
+  } else {
+    rc = read(fd, buf, len);
+    if (rc < 0 || (unsigned)rc < len)
+      rc = -1;
+    close(fd);
+  }
+
+  return rc;
+}
+
+int nw_roughly(int value)
+{
+  if(value < 0)
+    return -nw_roughly(-value);
+  else if(value <= 1)
+    return value;
+  else
+    return value * 3 / 4 + random() % (value / 2);
 }
