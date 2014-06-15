@@ -36,6 +36,11 @@ int nw_json_from_uci(struct uci_context *uci,
     return -1;
   }
 
+  if (!ptr.o) {
+    free(loc);
+    return -1;
+  }
+
   /* Copy value to JSON object */
   switch (ptr.o->type) {
     case UCI_TYPE_STRING: {
