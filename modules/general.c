@@ -71,7 +71,8 @@ static int nw_general_start_acquire_data(struct nodewatcher_module *module,
       while (!feof(cpuinfo_file)) {
         char key[128];
         if (fscanf(cpuinfo_file, "%127[^:]%*c%1023[^\n]", key, buffer) == 2) {
-          if (strcmp(nw_string_trim(key), "machine") == 0) {
+          if (strcmp(nw_string_trim(key), "machine") == 0 ||
+              strcmp(nw_string_trim(key), "model name") == 0) {
             json_object_object_add(hardware, "model", json_object_new_string(nw_string_trim(buffer)));
             break;
           }
