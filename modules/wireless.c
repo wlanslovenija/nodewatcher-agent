@@ -322,6 +322,8 @@ static int nw_wireless_start_acquire_data(struct nodewatcher_module *module,
 
     last_scan_survey = json_object_get(radios);
   } else {
+    /* Free the radios object as it has not been used this time */
+    json_object_put(radios);
     /* Just reuse previous survey */
     json_object_object_add(object, "radios", json_object_get(last_scan_survey));
   }
