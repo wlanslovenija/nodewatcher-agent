@@ -7,6 +7,22 @@ HTTP.
 
 .. _nodewatcher: https://github.com/wlanslovenija/nodewatcher
 
+Configuration
+-------------
+
+The agent may be configured via UCI. An example configuration, also used by the
+provided `OpenWrt package`_, which should be placed under ``/etc/config/nodewatcher``
+follows below::
+
+  config agent
+    option output_json '/www/nodewatcher/feed'
+
+Currently, the only option is to configure where the JSON output feed should be placed. By
+default, no output feed is generated and nodewatcher agent data is only accessible via
+the ubus API.
+
+.. _OpenWrt package: https://github.com/wlanslovenija/firmware-packages-opkg/tree/master/util/nodewatcher-agent
+
 ubus API
 --------
 
