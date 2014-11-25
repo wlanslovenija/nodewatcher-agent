@@ -73,7 +73,7 @@ static int nw_resources_start_acquire_data(struct nodewatcher_module *module,
     json_object_object_add(object, "memory", memory);
   }
 
-  /* Number of TCP connections */
+  /* Number of local TCP/UDP connections */
   json_object *connections = json_object_new_object();
   json_object *connections_ipv4 = json_object_new_object();
   json_object_object_add(connections_ipv4, "tcp", json_object_new_int(nw_file_line_count("/proc/net/tcp") - 1));
@@ -83,6 +83,11 @@ static int nw_resources_start_acquire_data(struct nodewatcher_module *module,
   json_object_object_add(connections_ipv6, "tcp", json_object_new_int(nw_file_line_count("/proc/net/tcp6") - 1));
   json_object_object_add(connections_ipv6, "udp", json_object_new_int(nw_file_line_count("/proc/net/udp6") - 1));
   json_object_object_add(connections, "ipv6", connections_ipv6);
+  /* Number of entries in connection tracking table */
+  json_object *connections_tracking = json_object_new_object();
+  nw_json_from_file("/proc/sys/net/netfilter/nf_conntrack_count", connections_tracking, "count");
+  nw_json_from_file("/proc/sys/net/netfilter/nf_conntrack_max", connections_tracking, "max");
+  json_object_object_add(connections, "tracking", connections_tracking);
   json_object_object_add(object, "connections", connections);
 
   /* Number of processes by status */
