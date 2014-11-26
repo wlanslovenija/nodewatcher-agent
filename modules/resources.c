@@ -85,8 +85,8 @@ static int nw_resources_start_acquire_data(struct nodewatcher_module *module,
   json_object_object_add(connections, "ipv6", connections_ipv6);
   /* Number of entries in connection tracking table */
   json_object *connections_tracking = json_object_new_object();
-  nw_json_from_file("/proc/sys/net/netfilter/nf_conntrack_count", connections_tracking, "count");
-  nw_json_from_file("/proc/sys/net/netfilter/nf_conntrack_max", connections_tracking, "max");
+  nw_json_from_file("/proc/sys/net/netfilter/nf_conntrack_count", connections_tracking, "count", true);
+  nw_json_from_file("/proc/sys/net/netfilter/nf_conntrack_max", connections_tracking, "max", true);
   json_object_object_add(connections, "tracking", connections_tracking);
   json_object_object_add(object, "connections", connections);
 

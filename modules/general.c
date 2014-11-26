@@ -34,7 +34,7 @@ static int nw_general_start_acquire_data(struct nodewatcher_module *module,
   /* Hostname */
   nw_json_from_uci(uci, "system.@system[0].hostname", object, "hostname");
   /* Nodewatcher firmware version */
-  nw_json_from_file("/etc/version", object, "version");
+  nw_json_from_file("/etc/version", object, "version", false);
   /* Kernel version */
   struct utsname uts;
   if (uname(&uts) >= 0) {

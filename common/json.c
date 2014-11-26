@@ -71,7 +71,8 @@ int nw_json_from_uci(struct uci_context *uci,
 
 int nw_json_from_file(const char *filename,
                       json_object *object,
-                      const char *key)
+                      const char *key,
+                      bool integer)
 {
   char tmp[1024];
   FILE *file = fopen(filename, "r");
@@ -95,7 +96,10 @@ int nw_json_from_file(const char *filename,
   fclose(file);
 
   buffer[buffer_len] = 0;
-  json_object_object_add(object, key, json_object_new_string(nw_string_trim(buffer)));
+  if (integer)
+    json_object_object_add(object, key, json_object_new_int(atoi(nw_string_trim(buffer))));
+  else
+    json_object_object_add(object, key, json_object_new_string(nw_string_trim(buffer)));
   free(buffer);
   return 0;
 }
