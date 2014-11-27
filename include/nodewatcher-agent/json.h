@@ -46,11 +46,13 @@ int nw_json_from_uci(struct uci_context *uci,
  * @param filename Filename
  * @param object Destination JSON object
  * @param key Key in JSON object
+ * @param integer True if result should be converted to an integer
  * @return 0 on success, -1 on failure
  */
 int nw_json_from_file(const char *filename,
                       json_object *object,
-                      const char *key);
+                      const char *key,
+                      bool integer);
 
 /**
  * Converts a blob to JSON objects.
