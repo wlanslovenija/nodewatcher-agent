@@ -24,6 +24,10 @@
 #include <syslog.h>
 #include <iwinfo.h>
 #include <iwinfo/utils.h>
+#include <libubox/md5.h>
+
+#define NW_CLIENT_ID_SALT "nw-client-c3U0XX"
+#define NW_CLIENT_ID_SALT_LENGTH 16
 
 /* Results of last scan survey */
 static json_object *last_scan_survey = NULL;
@@ -181,12 +185,66 @@ static bool nw_wireless_process_interface(const char *ifname,
     json_object_object_add(interface, "protocols", protocols);
   }
 
-  /* TODO: channel width (currently not supported in iwinfo!) */
-
   /* Encryption */
   struct iwinfo_crypto_entry crypto = { 0, };
   if (!iwinfo->encryption(ifname, (char*) &crypto)) {
     nw_wireless_add_encryption(interface, "encryption", &crypto);
+  }
+
+  /* Stations */
+  char result[IWINFO_BUFSIZE];
+  int length, i;
+  if (!iwinfo->assoclist(ifname, result, &length)) {
+    json_object *stations = json_object_new_array();
+    for (i = 0; i < length; i += sizeof(struct iwinfo_assoclist_entry)) {
+      struct iwinfo_assoclist_entry *entry = (struct iwinfo_assoclist_entry*) &result[i];
+      json_object *station = json_object_new_object();
+
+      char mac[18];
+      snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x",
+        entry->mac[0], entry->mac[1], entry->mac[2],
+        entry->mac[3], entry->mac[4], entry->mac[5]);
+
+      /* Compute salted hash of MAC address */
+      md5_ctx_t ctx;
+      uint8_t raw_mac_id[16];
+      char mac_id[33];
+
+      md5_begin(&ctx);
+      md5_hash(NW_CLIENT_ID_SALT, NW_CLIENT_ID_SALT_LENGTH, &ctx);
+      md5_hash(mac, 17, &ctx);
+      md5_end(raw_mac_id, &ctx);
+
+      /* Base64 encode the hash so it is more compact */
+      if (nw_base64_encode(raw_mac_id, sizeof(raw_mac_id), mac_id, sizeof(mac_id)) == 0) {
+        json_object_object_add(station, "client_id", json_object_new_string(mac_id));
+      } else {
+        json_object_put(station);
+        continue;
+      }
+
+      json_object_object_add(station, "signal", json_object_new_int(entry->signal));
+      json_object_object_add(station, "noise", json_object_new_int(entry->noise));
+      json_object_object_add(station, "inactive", json_object_new_int(entry->inactive));
+
+      json_object *rx = json_object_new_object();
+      json_object_object_add(rx, "rate", json_object_new_int(entry->rx_rate.rate));
+      json_object_object_add(rx, "mcs", json_object_new_int(entry->rx_rate.mcs));
+      json_object_object_add(rx, "40mhz", json_object_new_boolean(entry->rx_rate.is_40mhz));
+      json_object_object_add(rx, "short_gi", json_object_new_boolean(entry->rx_rate.is_short_gi));
+      json_object_object_add(station, "rx", rx);
+
+      json_object *tx = json_object_new_object();
+      json_object_object_add(tx, "rate", json_object_new_int(entry->tx_rate.rate));
+      json_object_object_add(tx, "mcs", json_object_new_int(entry->tx_rate.mcs));
+      json_object_object_add(tx, "40mhz", json_object_new_boolean(entry->tx_rate.is_40mhz));
+      json_object_object_add(tx, "short_gi", json_object_new_boolean(entry->tx_rate.is_short_gi));
+      json_object_object_add(station, "tx", tx);
+
+      json_object_array_add(stations, station);
+    }
+
+    json_object_object_add(interface, "stations", stations);
   }
 
   json_object_object_add(object, ifname, interface);
