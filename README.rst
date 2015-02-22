@@ -5,7 +5,7 @@ Nodewatcher agent is a monitoring agent that runs on OpenWrt-supported devices a
 can provide various telemetry information to the nodewatcher_ monitor daemon via
 HTTP.
 
-.. _nodewatcher: https://github.com/wlanslovenija/nodewatcher
+.. _nodewatcher: http://nodewatcher.net/
 
 Configuration
 -------------
@@ -94,3 +94,17 @@ implemented:
 * ``core.keys.ssh`` provides information about the node's host SSH keys.
 
 * ``core.clients`` provides information about the clients currently connected with the node, obtained from DHCP leases file.
+
+Source Code, Issue Tracker and Mailing List
+-------------------------------------------
+
+For development *wlan slovenija* open wireless network `development Trac`_ is
+used, so you can see `existing open tickets`_ or `open a new one`_ there. Source
+code is available on GitHub_. If you have any questions or if you want to
+discuss the project, use `nodewatcher mailing list`_.
+
+.. _development Trac: https://dev.wlan-si.net/wiki/Nodewatcher
+.. _existing open tickets: https://dev.wlan-si.net/report/14
+.. _open a new one: https://dev.wlan-si.net/newticket
+.. _GitHub: https://github.com/wlanslovenija/nodewatcher-agent
+.. _nodewatcher mailing list: https://wlan-si.net/lists/info/nodewatcher
