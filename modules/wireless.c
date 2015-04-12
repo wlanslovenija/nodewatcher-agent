@@ -254,8 +254,7 @@ static bool nw_wireless_process_interface(const char *ifname,
   return true;
 }
 
-static bool nw_wireless_process_radio(const char *phyname,
-                                      const char *ifname,
+static bool nw_wireless_process_radio(const char *ifname,
                                       json_object *object)
 {
   /* Initialize iwinfo backend for this device */
@@ -302,7 +301,14 @@ static bool nw_wireless_process_radio(const char *phyname,
     json_object_object_add(radio, "survey", survey);
   }
 
-  json_object_object_add(object, phyname, radio);
+  /* Determine the PHY name and add appropriate section */
+  char phyname[IWINFO_BUFSIZE] = { 0, };
+  if (!iwinfo->phyname(ifname, phyname)) {
+    json_object_object_add(object, phyname, radio);
+  } else {
+    json_object_put(radio);
+  }
+
 
   iwinfo = NULL;
   iwinfo_finish();
@@ -347,6 +353,9 @@ static int nw_wireless_start_acquire_data(struct nodewatcher_module *module,
 
   /* Iterate over the list of radios */
   json_object_object_foreach(data, key, val) {
+    /* Supress unused variable warning */
+    (void) key;
+
     json_object *ninterfaces = NULL;
     json_object_object_get_ex(val, "interfaces", &ninterfaces);
     if (!ninterfaces)
@@ -369,7 +378,7 @@ static int nw_wireless_start_acquire_data(struct nodewatcher_module *module,
 
     /* Process radio */
     if (new_radio_survey)
-      nw_wireless_process_radio(key, first_radio_iface, radios);
+      nw_wireless_process_radio(first_radio_iface, radios);
   }
 
   json_object_object_add(object, "interfaces", interfaces);
