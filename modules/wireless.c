@@ -232,6 +232,7 @@ static bool nw_wireless_process_interface(const char *ifname,
       json_object_object_add(rx, "mcs", json_object_new_int(entry->rx_rate.mcs));
       json_object_object_add(rx, "40mhz", json_object_new_boolean(entry->rx_rate.is_40mhz));
       json_object_object_add(rx, "short_gi", json_object_new_boolean(entry->rx_rate.is_short_gi));
+      json_object_object_add(rx, "packets", json_object_new_int(entry->rx_packets));
       json_object_object_add(station, "rx", rx);
 
       json_object *tx = json_object_new_object();
@@ -239,6 +240,7 @@ static bool nw_wireless_process_interface(const char *ifname,
       json_object_object_add(tx, "mcs", json_object_new_int(entry->tx_rate.mcs));
       json_object_object_add(tx, "40mhz", json_object_new_boolean(entry->tx_rate.is_40mhz));
       json_object_object_add(tx, "short_gi", json_object_new_boolean(entry->tx_rate.is_short_gi));
+      json_object_object_add(tx, "packets", json_object_new_int(entry->tx_packets));
       json_object_object_add(station, "tx", tx);
 
       json_object_array_add(stations, station);
