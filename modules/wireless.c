@@ -335,8 +335,10 @@ static int nw_wireless_start_acquire_data(struct nodewatcher_module *module,
   static struct blob_buf req;
   blob_buf_init(&req, 0);
 
-  if (ubus_invoke(ubus, ubus_id, "status", req.head, nw_json_from_ubus, &data, 500) != UBUS_STATUS_OK)
-    return false;
+  if (ubus_invoke(ubus, ubus_id, "status", req.head, nw_json_from_ubus, &data, 500) != UBUS_STATUS_OK) {
+    syslog(LOG_WARNING, "wireless: Failed to invoke netifd status method!");
+    return nw_module_finish_acquire_data(module, object);
+  }
 
   if (!data) {
     syslog(LOG_WARNING, "wireless: Failed to parse netifd wireless status data!");

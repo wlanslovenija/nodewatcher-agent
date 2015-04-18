@@ -81,10 +81,15 @@ int main(int argc, char **argv)
   uloop_init();
 
   /* Attempt to establish connection to ubus daemon */
-  ubus = ubus_connect(ubus_socket);
-  if (!ubus) {
-    fprintf(stderr, "ERROR: Failed to connect to ubus!");
-    return -1;
+  for (;;) {
+    ubus = ubus_connect(ubus_socket);
+    if (!ubus) {
+      syslog(LOG_WARNING, "Failed to connect to ubus!");
+      sleep(10);
+      continue;
+    }
+
+    break;
   }
 
   ubus_add_uloop(ubus);
@@ -92,25 +97,25 @@ int main(int argc, char **argv)
   /* Initialize UCI context */
   uci = uci_alloc_context();
   if (!uci) {
-    fprintf(stderr, "ERROR: Failed to initialize UCI!\n");
+    syslog(LOG_ERR, "Failed to initialize UCI!");
     return -1;
   }
 
   /* Discover and initialize modules */
   if (nw_module_init(ubus, uci) != 0) {
-    fprintf(stderr, "ERROR: Unable to initialize modules!\n");
+    syslog(LOG_ERR, "Unable to initialize modules!");
     return -1;
   }
 
   /* Initialize the scheduler */
   if (nw_scheduler_init() != 0) {
-    fprintf(stderr, "ERROR: Unable to initialize scheduler!\n");
+    syslog(LOG_ERR, "Unable to initialize scheduler!");
     return -1;
   }
 
   /* Initialize the output exporter */
   if (nw_output_init(uci) != 0) {
-    fprintf(stderr, "ERROR: Unable to initialize output exporter!\n");
+    syslog(LOG_ERR, "Unable to initialize output exporter!");
     return -1;
   }
 
