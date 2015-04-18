@@ -381,7 +381,7 @@ static int nw_wireless_start_acquire_data(struct nodewatcher_module *module,
     }
 
     /* Process radio */
-    if (new_radio_survey)
+    if (new_radio_survey && first_radio_iface)
       nw_wireless_process_radio(first_radio_iface, radios);
   }
 
