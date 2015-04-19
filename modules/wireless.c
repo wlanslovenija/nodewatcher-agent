@@ -233,6 +233,7 @@ static bool nw_wireless_process_interface(const char *ifname,
       json_object_object_add(rx, "40mhz", json_object_new_boolean(entry->rx_rate.is_40mhz));
       json_object_object_add(rx, "short_gi", json_object_new_boolean(entry->rx_rate.is_short_gi));
       json_object_object_add(rx, "packets", json_object_new_int(entry->rx_packets));
+      json_object_object_add(rx, "bytes", json_object_new_int(entry->rx_bytes));
       json_object_object_add(station, "rx", rx);
 
       json_object *tx = json_object_new_object();
@@ -241,7 +242,17 @@ static bool nw_wireless_process_interface(const char *ifname,
       json_object_object_add(tx, "40mhz", json_object_new_boolean(entry->tx_rate.is_40mhz));
       json_object_object_add(tx, "short_gi", json_object_new_boolean(entry->tx_rate.is_short_gi));
       json_object_object_add(tx, "packets", json_object_new_int(entry->tx_packets));
+      json_object_object_add(tx, "bytes", json_object_new_int(entry->tx_bytes));
+      json_object_object_add(tx, "retries", json_object_new_int(entry->tx_retries));
+      json_object_object_add(tx, "failed", json_object_new_int(entry->tx_failed));
       json_object_object_add(station, "tx", tx);
+
+      json_object_object_add(station, "authorized", json_object_new_boolean(entry->is_authorized));
+      json_object_object_add(station, "authenticated", json_object_new_boolean(entry->is_authenticated));
+      json_object_object_add(station, "preamble_short", json_object_new_boolean(entry->is_preamble_short));
+      json_object_object_add(station, "wme", json_object_new_boolean(entry->is_wme));
+      json_object_object_add(station, "mfp", json_object_new_boolean(entry->is_mfp));
+      json_object_object_add(station, "tdls", json_object_new_boolean(entry->is_tdls));
 
       json_object_array_add(stations, station);
     }
