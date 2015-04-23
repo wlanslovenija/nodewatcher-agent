@@ -22,6 +22,7 @@
 #include <syslog.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 /* Output file path */
 static char *output_filename = NULL;
@@ -44,6 +45,14 @@ int nw_output_init(struct uci_context *uci)
   }
 
   free(loc);
+
+  /* Ensure that the output filename is a symlink to /tmp to avoid flash wear. */
+  unlink(output_filename);
+  /* Return code of 'unlink' is ignored as the file may not even exist. */
+  if (symlink("/tmp/nodewatcher_agent_feed", output_filename) != 0) {
+    syslog(LOG_WARNING, "Unable to create symlink to '/tmp'! This may cause increased flash wear.");
+  }
+
   return 0;
 }
 
