@@ -1,7 +1,7 @@
 /*
  * nodewatcher-agent - remote monitoring daemon
  *
- * Copyright (C) 2014 Jernej Kos <jernej@kos.mx>
+ * Copyright (C) 2015 Jernej Kos <jernej@kos.mx>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by the
@@ -47,7 +47,9 @@ static const struct blobmsg_policy nw_module_policy[__AGENT_D_MAX] = {
   [AGENT_D_MODULE] = { .name = "module", .type = BLOBMSG_TYPE_STRING },
 };
 
-static int nw_module_register_library(struct ubus_context *ubus, const char *path)
+static int nw_module_register_library(struct ubus_context *ubus,
+                                      struct uci_context *uci,
+                                      const char *path)
 {
   struct nodewatcher_module *module;
   void *handle;
@@ -80,7 +82,7 @@ static int nw_module_register_library(struct ubus_context *ubus, const char *pat
 
   /* Perform module initialization */
   module->sched_status = NW_MODULE_INIT;
-  ret = module->hooks.init(module, ubus);
+  ret = module->hooks.init(module, ubus, uci);
   if (ret != 0) {
     avl_delete(&module_registry, &module->avl);
     syslog(LOG_WARNING, "Loading of module '%s' (%s) has failed!", module->name, path);
@@ -155,7 +157,7 @@ int nw_module_init(struct ubus_context *ubus, struct uci_context *uci)
       if (stat(path, &s) || !S_ISREG(s.st_mode))
         continue;
 
-      ret |= nw_module_register_library(ubus, path);
+      ret |= nw_module_register_library(ubus, uci, path);
     }
 
     closedir(d);

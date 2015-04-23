@@ -1,7 +1,7 @@
 /*
  * nodewatcher-agent - remote monitoring daemon
  *
- * Copyright (C) 2014 Jernej Kos <jernej@kos.mx>
+ * Copyright (C) 2015 Jernej Kos <jernej@kos.mx>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by the
@@ -35,7 +35,8 @@ struct nodewatcher_module;
 struct nodewatcher_module_hooks {
   /* Hook that initializes the module */
   int (*init)(struct nodewatcher_module *module,
-              struct ubus_context *ubus);
+              struct ubus_context *ubus,
+              struct uci_context *uci);
   /* Hook that requests the module to start acquiring data */
   int (*start_acquire_data)(struct nodewatcher_module *module,
                             struct ubus_context *ubus,

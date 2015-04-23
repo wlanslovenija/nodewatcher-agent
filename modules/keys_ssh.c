@@ -1,7 +1,7 @@
 /*
  * nodewatcher-agent - remote monitoring daemon
  *
- * Copyright (C) 2014 Jernej Kos <jernej@kos.mx>
+ * Copyright (C) 2015 Jernej Kos <jernej@kos.mx>
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Affero General Public License as published by the
@@ -66,7 +66,9 @@ static int nw_keys_ssh_start_acquire_data(struct nodewatcher_module *module,
   return nw_module_finish_acquire_data(module, object);
 }
 
-static int nw_keys_ssh_init(struct nodewatcher_module *module, struct ubus_context *ubus)
+static int nw_keys_ssh_init(struct nodewatcher_module *module,
+                            struct ubus_context *ubus,
+                            struct uci_context *uci)
 {
   return 0;
 }
