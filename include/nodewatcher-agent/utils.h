@@ -20,6 +20,7 @@
 #define NODEWATCHER_AGENT_UTILS_H
 
 #include <stddef.h>
+#include <uci.h>
 
 /**
  * Trims a string of whitespace characters. The original string
@@ -67,5 +68,24 @@ int nw_read_random_bytes(void *buf, size_t len);
  * @return Roughly the same value
  */
 int nw_roughly(int value);
+
+/**
+ * Returns a resolved UCI path as string. The caller is required to
+ * free the string after use.
+ *
+ * @param uci UCI context
+ * @param location UCI location expression (extended syntax)
+ * @return Target string or NULL
+ */
+char *nw_uci_get_string(struct uci_context *uci, const char *location);
+
+/**
+ * Returns a resolved UCI path as an integer.
+ *
+ * @param uci UCI context
+ * @param location UCI location expression (extended syntax)
+ * @return Target integer
+ */
+int nw_uci_get_int(struct uci_context *uci, const char *location);
 
 #endif

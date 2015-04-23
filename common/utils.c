@@ -159,3 +159,35 @@ int nw_roughly(int value)
   else
     return value * 3 / 4 + random() % (value / 2);
 }
+
+char *nw_uci_get_string(struct uci_context *uci, const char *location)
+{
+  struct uci_ptr ptr;
+  char *loc = strdup(location);
+  char *result = NULL;
+
+  /* Perform an UCI extended lookup */
+  if (uci_lookup_ptr(uci, &ptr, loc, true) != UCI_OK) {
+    free(loc);
+    return NULL;
+  }
+
+  if (ptr.o && ptr.o->type == UCI_TYPE_STRING) {
+    result = strdup(ptr.o->v.string);
+  }
+
+  free(loc);
+  return result;
+}
+
+int nw_uci_get_int(struct uci_context *uci, const char *location)
+{
+  char *string = nw_uci_get_string(uci, location);
+  if (!string)
+    return 0;
+
+  int result = atoi(string);
+  free(string);
+
+  return result;
+}

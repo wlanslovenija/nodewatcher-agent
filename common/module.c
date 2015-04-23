@@ -189,11 +189,8 @@ int nw_module_start_acquire_data(struct nodewatcher_module *module)
   return module->hooks.start_acquire_data(module, module_ubus, module_uci);
 }
 
-static void nw_module_export_all()
+json_object *nw_module_get_output()
 {
-  if (!nw_output_is_exporting())
-    return;
-
   /* Iterate through all modules and add content */
   struct nodewatcher_module *module;
   json_object *object = json_object_new_object();
@@ -202,6 +199,15 @@ static void nw_module_export_all()
     json_object_object_add(object, module->name, json_object_get(module->data));
   }
 
+  return object;
+}
+
+static void nw_module_export_all()
+{
+  if (!nw_output_is_exporting())
+    return;
+
+  json_object *object = nw_module_get_output();
   nw_output_export(object);
   json_object_put(object);
 }

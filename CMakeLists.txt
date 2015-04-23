@@ -10,6 +10,7 @@ option(WIRELESS_MODULE "Wireless module support" ON)
 option(KEYS_SSH_MODULE "SSH keys module support" ON)
 option(PACKAGES_MODULE "Packages module support" ON)
 option(CLIENTS_MODULE "Clients module support" ON)
+option(HTTP_PUSH_MODULE "HTTP push module support" ON)
 
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
@@ -103,6 +104,14 @@ if(CLIENTS_MODULE)
   add_library(clients_module MODULE modules/clients.c)
   target_link_libraries(clients_module ubox uci nodewatcher-agent-common)
   set_target_properties(clients_module PROPERTIES OUTPUT_NAME clients PREFIX "")
+endif()
+
+# HTTP push module
+if(HTTP_PUSH_MODULE)
+  set(MODULES ${MODULES} http_push_module)
+  add_library(http_push_module MODULE modules/http_push.c)
+  target_link_libraries(http_push_module curl ubox uci nodewatcher-agent-common)
+  set_target_properties(http_push_module PROPERTIES OUTPUT_NAME http_push PREFIX "")
 endif()
 
 install(TARGETS nodewatcher-agent nodewatcher-agent-common ${MODULES}

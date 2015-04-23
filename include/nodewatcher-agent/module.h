@@ -110,4 +110,12 @@ int nw_module_start_acquire_data(struct nodewatcher_module *module);
  */
 int nw_module_finish_acquire_data(struct nodewatcher_module *module, json_object *object);
 
+/**
+ * Returns a JSON object containing the current output of all modules. The
+ * caller is responsible for freeing the returned object.
+ *
+ * @return JSON object or NULL on error
+ */
+json_object *nw_module_get_output();
+
 #endif
