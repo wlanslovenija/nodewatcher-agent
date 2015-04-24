@@ -26,6 +26,12 @@
 /* Timestamp when last successful push occurred. */
 static time_t last_push_at = 0;
 
+static size_t nw_http_push_ignore_data(void *buffer, size_t size, size_t nmemb, void *userp)
+{
+  /* Helper function that ignores any received data. */
+  return size * nmemb;
+}
+
 static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
                                            struct ubus_context *ubus,
                                            struct uci_context *uci)
@@ -49,6 +55,7 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
     if (data) {
       CURL *curl = curl_easy_init();
       if (curl) {
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, nw_http_push_ignore_data);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
         curl_easy_setopt(curl, CURLOPT_URL, url);
