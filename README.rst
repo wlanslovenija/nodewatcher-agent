@@ -75,6 +75,27 @@ To output monitoring data, JSON format is used as in the following example:
 All float values are encoded as strings due to the fact that ubus message blobs do
 not currently support serialization of float/double types.
 
+HTTP push support
+-----------------
+
+The agent can also be configured to perform periodic push of monitoring data by using HTTP
+POST requests. This functionality is implemented in the ``http_push`` module which must
+be enabled for this to be available. The use of this module requires ``libcurl`` to be
+installed.
+
+After enabling the module, the following additional options may be specified via UCI::
+
+  config agent
+    # ...
+
+    # Push URL.
+    option push_url 'http://host/push/http/64840ad9-aac1-4494-b4d1-9de5d8cbedd9'
+    # Push interval in seconds.
+    option push_interval '120'
+
+Push is performed via a single HTTP POST request to the specified URL where the body contains
+the same JSON-formatted document as is used for reports.
+
 Modules
 -------
 
@@ -94,6 +115,8 @@ implemented:
 * ``core.keys.ssh`` provides information about the node's host SSH keys.
 
 * ``core.clients`` provides information about the clients currently connected with the node, obtained from DHCP leases file.
+
+* ``core.push.http`` enables periodic push of JSON data to a remote nodewatcher server.
 
 Source Code, Issue Tracker and Mailing List
 -------------------------------------------
