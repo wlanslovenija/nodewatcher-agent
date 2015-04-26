@@ -89,9 +89,11 @@ After enabling the module, the following additional options may be specified via
     # ...
 
     # Push URL.
-    option push_url 'http://host/push/http/64840ad9-aac1-4494-b4d1-9de5d8cbedd9'
+    option push_url 'https://host/push/http/64840ad9-aac1-4494-b4d1-9de5d8cbedd9'
     # Push interval in seconds.
     option push_interval '120'
+    # Path to server-side public key for authenticating the server.
+    option push_server_pubkey '/etc/crypto/public_key/server'
 
 Push is performed via a single HTTP POST request to the specified URL where the body contains
 the same JSON-formatted document as is used for reports.

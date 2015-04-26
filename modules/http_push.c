@@ -61,7 +61,13 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_POST, 1);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_object_to_json_string(data));
-        // TODO: Use CURLOPT_PINNEDPUBLICKEY to define server-side key.
+        /* Pin server-side public key when configured. */
+        char *server_pubkey = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_server_pubkey");
+        if (server_pubkey) {
+          curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+          curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, server_pubkey);
+          free(server_pubkey);
+        }
 
         /* Perform the push request. */
         CURLcode result = curl_easy_perform(curl);
@@ -74,8 +80,14 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
           case CURLE_REMOTE_ACCESS_DENIED: push_result = "access_denied"; break;
           case CURLE_HTTP_RETURNED_ERROR: push_result = "http_error"; break;
           case CURLE_OPERATION_TIMEDOUT: push_result = "timeout"; break;
+          case CURLE_SSL_PINNEDPUBKEYNOTMATCH:
           case CURLE_PEER_FAILED_VERIFICATION: push_result = "peer_verify_error"; break;
-          default: push_result = "unknown_error"; break;
+          default: {
+            push_result = "unknown_error";
+            /* Include the CURL error code in case of an unknown error. */
+            json_object_object_add(object, "curl_error_code", json_object_new_int(result));
+            break;
+          }
         }
 
         /* Update the last push timestamp. */
