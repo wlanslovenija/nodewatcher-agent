@@ -11,6 +11,7 @@ option(KEYS_SSH_MODULE "SSH keys module support" ON)
 option(PACKAGES_MODULE "Packages module support" ON)
 option(CLIENTS_MODULE "Clients module support" ON)
 option(HTTP_PUSH_MODULE "HTTP push module support" ON)
+option(ROUTING_BABEL_MODULE "Babel routing module support" ON)
 
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
@@ -112,6 +113,14 @@ if(HTTP_PUSH_MODULE)
   add_library(http_push_module MODULE modules/http_push.c)
   target_link_libraries(http_push_module curl ubox uci nodewatcher-agent-common)
   set_target_properties(http_push_module PROPERTIES OUTPUT_NAME http_push PREFIX "")
+endif()
+
+# Babel routing module
+if(ROUTING_BABEL_MODULE)
+  set(MODULES ${MODULES} routing_babel_module)
+  add_library(routing_babel_module MODULE modules/routing_babel.c)
+  target_link_libraries(routing_babel_module ubox uci nodewatcher-agent-common)
+  set_target_properties(routing_babel_module PROPERTIES OUTPUT_NAME routing_babel PREFIX "")
 endif()
 
 install(TARGETS nodewatcher-agent nodewatcher-agent-common ${MODULES}

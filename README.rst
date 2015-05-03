@@ -120,6 +120,8 @@ implemented:
 
 * ``core.push.http`` enables periodic push of JSON data to a remote nodewatcher server.
 
+* ``core.routing.babel`` provides information about the node's Babel routing daemon.
+
 Source Code, Issue Tracker and Mailing List
 -------------------------------------------
 
