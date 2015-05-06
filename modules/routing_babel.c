@@ -79,6 +79,22 @@ static void nw_routing_babel_client_timeout(struct uloop_timeout *timeout)
   nw_routing_babel_client_close(&bc.stream.stream);
 }
 
+static json_object *nw_routing_babel_add_array_item(const char *key)
+{
+  /* Get the existing list or create a new one. */
+  json_object *list;
+  json_object_object_get_ex(bc.object, key, &list);
+  if (!list) {
+    list = json_object_new_array();
+    json_object_object_add(bc.object, key, list);
+  }
+
+  /* Create a new array entry. */
+  json_object *item = json_object_new_object();
+  json_object_array_add(list, item);
+  return item;
+}
+
 static void nw_routing_babel_client_read(struct ustream *s, int bytes)
 {
   struct ustream_buf *buf = s->r.head;
@@ -116,21 +132,11 @@ static void nw_routing_babel_client_read(struct ustream *s, int bytes)
       } else if (!strcmp(info_type, INFO_NEIGHBOUR_NAME)) {
         /* Neighbours. */
         info = INFO_NEIGHBOUR;
-
-        /* Get the list of existing neighbours or create a new one. */
-        json_object *neighbours;
-        json_object_object_get_ex(bc.object, "neighbours", &neighbours);
-        if (!neighbours) {
-          neighbours = json_object_new_array();
-          json_object_object_add(bc.object, "neighbours", neighbours);
-        }
-
-        /* Create a new neighbour entry. */
-        item = json_object_new_object();
-        json_object_array_add(neighbours, item);
+        item = nw_routing_babel_add_array_item("neighbours");
       } else if (!strcmp(info_type, INFO_XROUTE_NAME)) {
         /* Exported routes. */
         info = INFO_XROUTE;
+        item = nw_routing_babel_add_array_item("exported_routes");
       } else if (!strcmp(info_type, INFO_ROUTE_NAME)) {
         /* Imported routes. */
         info = INFO_ROUTE;
@@ -173,7 +179,16 @@ static void nw_routing_babel_client_read(struct ustream *s, int bytes)
             break;
           }
           case INFO_XROUTE: {
-            /* Currently we do not report exported routes. */
+            if (!strcmp(key, "prefix")) {
+              /* Advertised destination prefix. */
+              json_object_object_add(item, "dst_prefix", json_object_new_string(value));
+            } else if (!strcmp(key, "from")) {
+              /* Advertised source prefix. */
+              json_object_object_add(item, "src_prefix", json_object_new_string(value));
+            } else if (!strcmp(key, "metric")) {
+              /* Advertised metric. */
+              json_object_object_add(item, "metric", json_object_new_int(atoi(value)));
+            }
             break;
           }
           case INFO_ROUTE: {
