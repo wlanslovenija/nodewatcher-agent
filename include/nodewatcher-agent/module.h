@@ -19,7 +19,7 @@
 #ifndef NODEWATCHER_AGENT_MODULE_H
 #define NODEWATCHER_AGENT_MODULE_H
 
-#include <json/json.h>
+#include <json-c/json.h>
 #include <libubox/avl.h>
 #include <libubus.h>
 #include <uci.h>
