@@ -68,6 +68,16 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
           curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, server_pubkey);
           free(server_pubkey);
         }
+        /* Setup client authentication when configured. */
+        char *client_certificate = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_client_certificate");
+        char *client_key = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_client_key");
+        if (client_certificate && client_key) {
+          curl_easy_setopt(curl, CURLOPT_SSLCERT, client_certificate);
+          curl_easy_setopt(curl, CURLOPT_SSLKEY, client_key);
+        }
+
+        free(client_certificate);
+        free(client_key);
 
         /* Perform the push request. */
         CURLcode result = curl_easy_perform(curl);
