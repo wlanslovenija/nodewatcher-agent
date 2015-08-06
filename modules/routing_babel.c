@@ -172,6 +172,14 @@ static void nw_routing_babel_client_read(struct ustream *s, int bytes)
             } else if (!strcmp(key, "txcost")) {
               /* Neighbour TX cost. */
               json_object_object_add(item, "txcost", json_object_new_int(atoi(value)));
+            } else if (!strcmp(key, "rtt")) {
+              /* Neighbour RTT. */
+              unsigned int thousands, rest;
+              if (sscanf(value, "%d.%d", &thousands, &rest) == 2)
+                json_object_object_add(item, "rtt", json_object_new_int(thousands * 1000 + rest));
+            } else if (!strcmp(key, "rttcost")) {
+              /* Neighbour RTT cost. */
+              json_object_object_add(item, "rttcost", json_object_new_int(atoi(value)));
             } else if (!strcmp(key, "cost")) {
               /* Neighbour cost. */
               json_object_object_add(item, "cost", json_object_new_int(atoi(value)));
