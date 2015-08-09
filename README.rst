@@ -122,6 +122,8 @@ implemented:
 
 * ``core.routing.babel`` provides information about the node's Babel routing daemon.
 
+* ``core.routing.olsr`` provides information about the node's OLSR routing daemon.
+
 Source Code, Issue Tracker and Mailing List
 -------------------------------------------
 

@@ -12,6 +12,7 @@ option(PACKAGES_MODULE "Packages module support" ON)
 option(CLIENTS_MODULE "Clients module support" ON)
 option(HTTP_PUSH_MODULE "HTTP push module support" ON)
 option(ROUTING_BABEL_MODULE "Babel routing module support" ON)
+option(ROUTING_OLSR_MODULE "OLSR routing module support" ON)
 
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
@@ -121,6 +122,14 @@ if(ROUTING_BABEL_MODULE)
   add_library(routing_babel_module MODULE modules/routing_babel.c)
   target_link_libraries(routing_babel_module ubox uci nodewatcher-agent-common)
   set_target_properties(routing_babel_module PROPERTIES OUTPUT_NAME routing_babel PREFIX "")
+endif()
+
+# OLSR routing module
+if(ROUTING_OLSR_MODULE)
+  set(MODULES ${MODULES} routing_olsr_module)
+  add_library(routing_olsr_module MODULE modules/routing_olsr.c)
+  target_link_libraries(routing_olsr_module ubox uci nodewatcher-agent-common)
+  set_target_properties(routing_olsr_module PROPERTIES OUTPUT_NAME routing_olsr PREFIX "")
 endif()
 
 install(TARGETS nodewatcher-agent nodewatcher-agent-common ${MODULES}
