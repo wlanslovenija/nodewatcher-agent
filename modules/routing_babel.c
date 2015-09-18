@@ -62,6 +62,7 @@ static void nw_routing_babel_client_close(struct ustream *s)
 {
   ustream_free(s);
   close(bc.client.fd);
+  uloop_fd_delete(&bc.client);
 
   /* Since we are done, we may cancel the timer. */
   uloop_timeout_cancel(&bc.timer);

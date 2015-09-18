@@ -55,6 +55,7 @@ static void nw_routing_olsr_client_close(struct ustream *s)
 {
   ustream_free(s);
   close(oc.client.fd);
+  uloop_fd_delete(&oc.client);
 
   /* Free the JSON parser. */
   json_tokener_free(oc.jstok);
