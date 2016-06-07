@@ -28,6 +28,7 @@
 #include <syslog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <limits.h>
 
 /* AVL tree containing all registered modules with module name as their key */
 static struct avl_tree module_registry;

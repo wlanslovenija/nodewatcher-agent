@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <math.h>
+#include <limits.h>
 
 /* Previous CPU usage values */
 static unsigned int last_cpu_times[7] = {0, };
