@@ -132,7 +132,12 @@ if(ROUTING_OLSR_MODULE)
   set_target_properties(routing_olsr_module PROPERTIES OUTPUT_NAME routing_olsr PREFIX "")
 endif()
 
-install(TARGETS nodewatcher-agent nodewatcher-agent-common ${MODULES}
+install(TARGETS nodewatcher-agent nodewatcher-agent-common
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
 )
+
+install(TARGETS ${MODULES} LIBRARY DESTINATION lib/nodewatcher-agent)
+
+file(GLOB headers include/nodewatcher-agent/*.h)
+install(FILES ${headers} DESTINATION include/nodewatcher-agent)
