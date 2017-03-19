@@ -45,7 +45,7 @@ static int nw_general_start_acquire_data(struct nodewatcher_module *module,
   /* Uptime in seconds */
   FILE *uptime_file = fopen("/proc/uptime", "r");
   if (uptime_file) {
-    int64_t uptime;
+    long long int uptime;
     if (fscanf(uptime_file, "%lld", &uptime) == 1)
       json_object_object_add(object, "uptime", json_object_new_int(uptime));
     fclose(uptime_file);
