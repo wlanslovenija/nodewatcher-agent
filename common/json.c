@@ -83,15 +83,15 @@ int nw_json_from_file(const char *filename,
   size_t buffer_len = 0;
   while (!feof(file)) {
     size_t n = fread(tmp, 1, sizeof(tmp), file);
-    buffer_len += n;
-    char *tbuffer = (char*) realloc(buffer, buffer_len + 1);
+    char *tbuffer = (char*) realloc(buffer, buffer_len + n + 1);
     if (!tbuffer) {
       free(buffer);
       return -1;
     }
     buffer = tbuffer;
 
-    memcpy(buffer, tmp, n);
+    memcpy(buffer + buffer_len, tmp, n);
+    buffer_len += n;
   }
   fclose(file);
 
