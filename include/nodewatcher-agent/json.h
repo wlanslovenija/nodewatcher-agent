@@ -19,7 +19,7 @@
 #ifndef NODEWATCHER_AGENT_JSON_H
 #define NODEWATCHER_AGENT_JSON_H
 
-#include <json-c/json.h>
+#include <json.h>
 #include <uci.h>
 #include <libubox/blobmsg.h>
 #include <libubus.h>

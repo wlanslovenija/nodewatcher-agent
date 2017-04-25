@@ -21,7 +21,7 @@
 #include <nodewatcher-agent/utils.h>
 
 #include <syslog.h>
-#include <curl/curl.h>
+#include <curl.h>
 
 /* Timestamp when last successful push occurred. */
 static time_t last_push_at = 0;
