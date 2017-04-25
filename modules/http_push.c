@@ -61,6 +61,7 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_POST, 1);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_object_to_json_string(data));
+#if LIBCURL_VERSION_NUM >= 0x072700
         /* Pin server-side public key when configured. */
         char *server_pubkey = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_server_pubkey");
         if (server_pubkey) {
@@ -68,6 +69,7 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
           curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, server_pubkey);
           free(server_pubkey);
         }
+#endif
         /* Setup client authentication when configured. */
         char *client_certificate = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_client_certificate");
         char *client_key = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_client_key");
@@ -90,7 +92,9 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
           case CURLE_REMOTE_ACCESS_DENIED: push_result = "access_denied"; break;
           case CURLE_HTTP_RETURNED_ERROR: push_result = "http_error"; break;
           case CURLE_OPERATION_TIMEDOUT: push_result = "timeout"; break;
+#if LIBCURL_VERSION_NUM >= 0x072700
           case CURLE_SSL_PINNEDPUBKEYNOTMATCH:
+#endif
           case CURLE_PEER_FAILED_VERIFICATION: push_result = "peer_verify_error"; break;
           default: {
             push_result = "unknown_error";
