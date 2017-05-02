@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   int log_option = 0;
   int c;
 
-  while ((c = getopt(argc, argv, "s:")) != -1) {
+  while ((c = getopt(argc, argv, "fs:")) != -1) {
     switch (c) {
       case 's': ubus_socket = optarg; break;
       case 'f': log_option |= LOG_PERROR; break;
