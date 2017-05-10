@@ -56,7 +56,12 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
       CURL *curl = curl_easy_init();
       if (curl) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, nw_http_push_ignore_data);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
+        int timeout = nw_uci_get_int(uci, "nodewatcher.@agent[0].push_timeout");
+        if (timeout == 0) {
+          /* Default. */
+          timeout = 5;
+        }
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_POST, 1);
@@ -81,6 +86,13 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
         free(client_certificate);
         free(client_key);
 
+        /* Provide a buffer to store errors in. */
+        char errbuf[CURL_ERROR_SIZE];
+        curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+
+        /* Set the error buffer as empty before performing a request. */
+        errbuf[0] = '\0';
+
         /* Perform the push request. */
         CURLcode result = curl_easy_perform(curl);
         /* Map result codesto string enumerations. */
@@ -96,6 +108,14 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
           case CURLE_SSL_PINNEDPUBKEYNOTMATCH:
 #endif
           case CURLE_PEER_FAILED_VERIFICATION: push_result = "peer_verify_error"; break;
+          case CURLE_SSL_CONNECT_ERROR:
+            push_result = "ssl_connect_error";
+            if (strlen(errbuf)) {
+              syslog(LOG_WARNING, "http-push: SSL connect error: '%s'", errbuf);
+            } else {
+              syslog(LOG_WARNING, "http-push: SSL connect error: %s", curl_easy_strerror(result));
+            }
+            break;
           default: {
             push_result = "unknown_error";
             /* Include the CURL error code in case of an unknown error. */
