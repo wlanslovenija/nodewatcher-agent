@@ -57,7 +57,8 @@ int nw_file_line_count(const char *filename)
 
   int lines = 0;
   while (!feof(file)) {
-    fscanf(file, "%*[^\n]\n");
+    int unused = fscanf(file, "%*[^\n]\n");
+    (void) unused;
     lines++;
   }
 
