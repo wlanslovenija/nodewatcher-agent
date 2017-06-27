@@ -133,7 +133,7 @@ To build the master version of nodewatcher agent package a buildroot needs to be
   ./lede/scripts/configure-platform x86_64
   ./lede/scripts/build-toolchain
 
-The latest version and commit hash should be looked up in the repository. If building for a different platform, replace ``x86_64`` with a desired one (e.g. ``ar71xx``).
+The latest LEDE version and commit hash should be looked up in the repository_. If building for a different platform, replace ``x86_64`` with a desired one (e.g. ``ar71xx``).
 
 To build the nodewatcher agent and generate the desired package run::
 
@@ -177,6 +177,7 @@ Troubleshooting
 Troubleshoot connection issues with commands like ``uci show dropbear``, ``cat /etc/passwd``, ``cat /etc/shadow``, ``logread``, ``ip addr``...
 
 .. _firmware core: https://github.com/wlanslovenija/firmware-core
+.. _repository: https://github.com/lede-project/source/releases
 
 Source Code, Issue Tracker and Mailing List
 -------------------------------------------
