@@ -133,7 +133,7 @@ To build the master version of nodewatcher agent package a buildroot needs to be
   ./lede/scripts/configure-platform x86_64
   ./lede/scripts/build-toolchain
 
-If building for a different platform, replace ``x86_64`` with a desired one (e.g. ``ar71xx``).
+The latest version and commit hash should be looked up in the repository. If building for a different platform, replace ``x86_64`` with a desired one (e.g. ``ar71xx``).
 
 To build the nodewatcher agent and generate the desired package run::
 
@@ -148,7 +148,8 @@ All that remains is to create a symlink to the development repository::
 
 The above ``make`` command will now build the local HEAD version. Any changes need to be added to a temporary commit and edited using ``git commit --amend``.
 
-----
+Installing packages
+~~~~~~~~~~~~~~~~~~~
 
 If building for an ``x86_64`` architecture, a virtual machine can be used for development. Run ``make`` in the buildroot directory to generate LEDE VM images for VMWare and VirtualBox. They will be located in ``bin/targets/x86/64``. Once the VM is running, set the SSH password using ``passwd`` and change ``lan`` setting from ``static`` to ``dhcp`` using::
 
@@ -170,7 +171,8 @@ Go to target directories and install packages using::
 
   opkg install *.ipk
 
-----
+Troubleshooting
+~~~~~~~~~~~~~~~
 
 Troubleshoot connection issues with commands like ``uci show dropbear``, ``cat /etc/passwd``, ``cat /etc/shadow``, ``logread``, ``ip addr``...
 
