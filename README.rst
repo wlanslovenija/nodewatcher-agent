@@ -124,6 +124,58 @@ implemented:
 
 * ``core.routing.olsr`` provides information about the node's OLSR routing daemon.
 
+Development setup
+-----------------
+
+To build the master version of nodewatcher agent package a buildroot needs to be set up. Checkout `firmware core`_ and use the scripts which automatically download all the relevant feeds and create the buildroot in ``build/lede``::
+
+  ./lede/scripts/prepare v17.01.2 source.git 2da512ecf4631cd7812283f0931cf6bbf842a313
+  ./lede/scripts/configure-platform x86_64
+  ./lede/scripts/build-toolchain
+
+If building for a different platform, replace ``x86_64`` with a desired one (e.g. ``ar71xx``).
+
+To build the nodewatcher agent and generate the desired package run::
+
+  make package/nodewatcher-agent/{clean,compile} V=s
+
+Now ``make`` needs to be set so it builds the local version of the nodewatcher agent. Run ``make menuconfig``, go to ``Advanced configuration options (for developers)`` and check the ``Enable package source tree override`` option (press y). Exit and confirm changes. 
+
+All that remains is to create a symlink to the development repository::
+
+  cd package/feeds/nodewatcher/nodewatcher-agent
+  ln -s /home/user/path/to/nodewatcher-agent/.git git-src
+
+The above ``make`` command will now build the local HEAD version. Any changes need to be added to a temporary commit and edited using ``git commit --amend``.
+
+----
+
+If building for an ``x86_64`` architecture, a virtual machine can be used for development. Run ``make`` in the buildroot directory to generate LEDE VM images for VMWare and VirtualBox. They will be located in ``bin/targets/x86/64``. Once the VM is running, set the SSH password using ``passwd`` and change ``lan`` setting from ``static`` to ``dhcp`` using::
+
+  uci set network.lan.proto='dhcp'
+  uci commit
+  reboot
+
+The built packages are located in ``bin/packages/x86_64/nodewatcher`` (if building for an ``x86_64`` architecture). They need to be transferred to a target device or virtual machine and installed. The easiest way would be to set up a local network and transfer the packages using::
+
+  scp -r nodewatcher root@192.168.X.X:/tmp
+
+Some dependencies need to be transferred from ``bin/packages/x86_64/lede``, ``bin/packages/x86_64/base`` and ``bin/targets/x86/64/packages``.
+
+Once all the packages are on the target machine connect to it using SSH::
+
+  ssh -oKexAlgorithms=+'diffie-hellman-group1-sha1' root@192.168.X.X
+
+Go to target directories and install packages using::
+
+  opkg install *.ipk
+
+----
+
+Troubleshoot connection issues with commands like ``uci show dropbear``, ``cat /etc/passwd``, ``cat /etc/shadow``, ``logread``, ``ip addr``...
+
+.. _firmware core: https://github.com/wlanslovenija/firmware-core
+
 Source Code, Issue Tracker and Mailing List
 -------------------------------------------
 
@@ -137,45 +189,3 @@ discuss the project, use `nodewatcher mailing list`_.
 .. _open a new one: https://dev.wlan-si.net/newticket
 .. _GitHub: https://github.com/wlanslovenija/nodewatcher-agent
 .. _nodewatcher mailing list: https://wlan-si.net/lists/info/nodewatcher
-
-Development setup
------------------
-
-To build the master version of nodewatcher-agent package a buildroot needs to be set up. Checkout `firmware-core`_ and use the scripts which automatically download all the relevant feeds and create the buildroot in `build/lede`:
-
-  ./lede/scripts/prepare v17.01.2 source.git 2da512ecf4631cd7812283f0931cf6bbf842a313
-  ./lede/scripts/configure-platform x86_64
-  ./lede/scripts/build-toolchain
-
-If building for a different platform, replace x86_64 with a desired one (e.g. ar71xx).
-
-To build the nodewatcher-agent and generate the desired package run:
-
-  make package/nodewatcher-agent/{clean,compile} V=s
-
-Now `make` needs to be set so it builds the local version of the nodewatcher-agent. Run `make menuconfig`, go to `Advanced configuration options (for developers)` and check the `Enable package source tree override` option (press y). Exit and confirm changes. 
-
-All that remains is to create a symlink to the development repository:
-
-  cd package/feeds/nodewatcher/nodewatcher-agent
-  ln -s /home/user/path/to/nodewatcher-agent/.git git-src
-
-The above `make` command will now build the local HEAD version. Any changes need to be added to a temporary `commit` and edited using `git commit --amend`.
-
-----
-
-If building for an x86_64 architecture, a virtual machine can be used for development. Run `make` in the buildroot directory to generate LEDE VM images for VMWare and VirtualBox. They will be located in `bin/targets/x86/64`. Once the VM is running, set the SSH password using `passwd` and change `lan` setting from `static` to `dhcp` using:
-
-  uci set network.lan.proto='dhcp'
-  uci commit
-  reboot
-
-The built packages are located in `bin/packages/x86_64/nodewatcher` (if building for an x86_64 architecture). They need to be transferred to a target device or virtual machine and installed. The easiest way would be to set up a local network and transfer the packages using `scp -r nodewatcher root@192.168.X.X:/tmp`. Some dependencies need to be transferred from `bin/packages/x86_64/lede`, `bin/packages/x86_64/base` and `bin/targets/x86/64/packages`.
-
-Once all the packages are on the target machine connect to it using SSH:
-
-  ssh -oKexAlgorithms=+'diffie-hellman-group1-sha1' root@192.168.X.X
-
-Go to target directories and install packages using `opkg install *.ipk`.
-
-Troubleshoot connection issues with commands like `uci show dropbear`, `cat /etc/passwd`, `cat /etc/shadow`, `logread`, `ip addr`...
