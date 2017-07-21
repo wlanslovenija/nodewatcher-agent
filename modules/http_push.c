@@ -22,6 +22,7 @@
 
 #include <syslog.h>
 #include <curl.h>
+#include <openssl/hmac.h>
 
 /* Timestamp when last successful push occurred. */
 static time_t last_push_at = 0;
@@ -49,6 +50,7 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
 
   /* Get the configured URL from UCI. */
   char *url = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_url");
+
   if (url) {
     /* Collect all the module data and perform the push. */
     json_object *data = nw_module_get_output();
@@ -61,30 +63,60 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
           /* Default. */
           timeout = 5;
         }
+
+        const char* data_string = json_object_to_json_string(data); // TODO: const?
+
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_POST, 1);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_object_to_json_string(data));
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data_string);
+
 #if LIBCURL_VERSION_NUM >= 0x072700
         /* Pin server-side public key when configured. */
         char *server_pubkey = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_server_pubkey");
+        char *auth_type = nw_uci_get_string(uci, "nodewatcher.@agent[0].authentication_method");
+        
         if (server_pubkey) {
-          curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-          curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, server_pubkey);
+          if (strcmp(auth_type, "hmac") == 0) {
+            unsigned char *hmac_result = HMAC(EVP_sha256(), server_pubkey, strlen(server_pubkey), (unsigned char *)data_string, strlen(data_string), NULL, NULL);
+            char signature[((strlen((char *)hmac_result)+2)/3)*4];
+
+            if (nw_base64_encode(hmac_result, strlen((char *)hmac_result), signature, sizeof(signature)) == 0) {
+              char sig_dest[26+sizeof(signature)];
+              strcat(strcpy(sig_dest, "X-Nodewatcher-Signature: "), signature);
+
+              struct curl_slist *chunk = NULL;
+              chunk = curl_slist_append(chunk, "X-Nodewatcher-Signature-Algorithm: hmac-sha256");
+              chunk = curl_slist_append(chunk, sig_dest);
+              curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+            }
+            
+            free(hmac_result);
+
+          } else {
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_easy_setopt(curl, CURLOPT_PINNEDPUBLICKEY, server_pubkey);
+          }
+
           free(server_pubkey);
+          free(auth_type);
         }
 #endif
-        /* Setup client authentication when configured. */
-        char *client_certificate = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_client_certificate");
-        char *client_key = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_client_key");
-        if (client_certificate && client_key) {
-          curl_easy_setopt(curl, CURLOPT_SSLCERT, client_certificate);
-          curl_easy_setopt(curl, CURLOPT_SSLKEY, client_key);
-        }
 
-        free(client_certificate);
-        free(client_key);
+        /* Setup client authentication when configured. */
+        if (strcmp(auth_type, "hmac") != 0) {
+          char *client_certificate = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_client_certificate");
+          char *client_key = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_client_key");
+
+          if (client_certificate && client_key) {
+            curl_easy_setopt(curl, CURLOPT_SSLCERT, client_certificate);
+            curl_easy_setopt(curl, CURLOPT_SSLKEY, client_key);
+          }
+
+          free(client_certificate);
+          free(client_key);
+        }
 
         /* Provide a buffer to store errors in. */
         char errbuf[CURL_ERROR_SIZE];
