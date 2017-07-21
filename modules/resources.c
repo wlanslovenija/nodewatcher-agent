@@ -165,6 +165,20 @@ static int nw_resources_start_acquire_data(struct nodewatcher_module *module,
   /* Number of IPv4 routes */
   /* Number of IPv6 routes */
 
+  /* Number of open file descriptors */
+  FILE *filenr_file = fopen("/proc/sys/fs/file-nr", "r");
+  if (filenr_file) {
+    unsigned int fn_current = 0, fn_available = 0, fn_max = 0;
+    if (fscanf(filenr_file, "%u\t%u\t%u", &fn_current, &fn_available, &fn_max) == 3) {
+      json_object *files = json_object_new_object();
+      json_object_object_add(files, "open", json_object_new_int(fn_current));
+      json_object_object_add(files, "available", json_object_new_int(fn_available));
+      json_object_object_add(files, "max", json_object_new_int(fn_max));
+      json_object_object_add(object, "files", files);
+    }
+    fclose(filenr_file);
+  }
+
   /* Store resulting JSON object */
   nw_module_finish_acquire_data(module, object);
   return 0;
