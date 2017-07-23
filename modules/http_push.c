@@ -19,11 +19,11 @@
 #include <nodewatcher-agent/module.h>
 #include <nodewatcher-agent/json.h>
 #include <nodewatcher-agent/utils.h>
+#include <nodewatcher-agent/hmac.h>
 
 #include <syslog.h>
 #include <curl.h>
-#include <strings.h> 
-#include <openssl/hmac.h>
+#include <strings.h>
 
 /* Timestamp when last successful push occurred. */
 static time_t last_push_at = 0;
@@ -79,20 +79,20 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
           const char *hmac_key = nw_uci_get_string(uci, "nodewatcher.@agent[0].hmac_key");
 
           if (hmac_key) {
-            const unsigned char *hmac_result = HMAC(EVP_sha256(), hmac_key, strlen(hmac_key), (unsigned char *)data_string, strlen(data_string), NULL, NULL);
-            char signature[((strlen((char *)hmac_result)+2)/3)*4];
+            unsigned char hmac_out[SHA256_HASH_SIZE];
+            hmac((unsigned char *)hmac_key, strlen(hmac_key), (unsigned char *)data_string, strlen(data_string), hmac_out);
 
-            if (nw_base64_encode(hmac_result, strlen((char *)hmac_result), signature, sizeof(signature)) == 0) {
-              char sig_dest[26+sizeof(signature)];
-              strcat(strcpy(sig_dest, "X-Nodewatcher-Signature: "), signature);
+            char signature[SHA256_HASH_SIZE + 1] = {0};
+
+            if (nw_base64_encode(hmac_out, SHA256_HASH_SIZE, signature, SHA256_HASH_SIZE) == 0) {
+              char signature_header[26+sizeof(signature)] = {0};
+              strcat(strcpy(signature_header, "X-Nodewatcher-Signature: "), signature);
 
               struct curl_slist *chunk = NULL;
               chunk = curl_slist_append(chunk, "X-Nodewatcher-Signature-Algorithm: hmac-sha256");
-              chunk = curl_slist_append(chunk, sig_dest);
+              chunk = curl_slist_append(chunk, signature_header);
               curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
             }
-            
-            free((unsigned char *)hmac_result);
           }
 
           free((char *)hmac_key);
