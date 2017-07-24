@@ -73,14 +73,14 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
         curl_easy_setopt(curl, CURLOPT_POST, 1);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data_string);
 
-        const char *auth_type = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_authentication_method"); // TODO: is hmac default?
+        const char *auth_type = nw_uci_get_string(uci, "nodewatcher.@agent[0].push_authentication_method");
 
         if (strcasecmp(auth_type, "hmac") == 0) {
           const char *hmac_key = nw_uci_get_string(uci, "nodewatcher.@agent[0].hmac_key");
 
           if (hmac_key) {
             unsigned char hmac_out[SHA256_HASH_SIZE];
-            hmac((unsigned char *)hmac_key, strlen(hmac_key), (unsigned char *)data_string, strlen(data_string), hmac_out);
+            hmac_sha256((unsigned char*) hmac_key, strlen(hmac_key), (unsigned char*) data_string, strlen(data_string), hmac_out);
 
             char signature[SHA256_HASH_SIZE + 1] = {0};
 
@@ -95,7 +95,7 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
             }
           }
 
-          free((char *)hmac_key);
+          free((char*) hmac_key);
 
         } else {
 
@@ -122,8 +122,8 @@ static int nw_http_push_start_acquire_data(struct nodewatcher_module *module,
           free(client_key);
         }
 
-        free((char *)data_string);
-        free((char *)auth_type);
+        free((char*) data_string);
+        free((char*) auth_type);
 
         /* Provide a buffer to store errors in. */
         char errbuf[CURL_ERROR_SIZE];

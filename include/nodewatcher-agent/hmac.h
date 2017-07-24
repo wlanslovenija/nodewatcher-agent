@@ -7,6 +7,6 @@
 #define SHA256_BLOCK_SIZE 64
 
 void sha256(const BYTE *text, BYTE *buf);
-void hmac(BYTE *key, int key_len, const BYTE *data, int data_len, BYTE *hmac_out);
+void hmac_sha256(BYTE *key, int key_len, const BYTE *data, int data_len, BYTE *hmac_out);
 
 #endif   // NODEWATCHER_AGENT_HMAC_H

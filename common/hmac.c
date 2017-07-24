@@ -4,11 +4,11 @@ void sha256(const BYTE *text, BYTE *buf)
 {
     SHA256_CTX ctx;
     sha256_init(&ctx);
-    sha256_update(&ctx, text, strlen((char *)text));
+    sha256_update(&ctx, text, strlen((char*) text));
     sha256_final(&ctx, buf);
 }
 
-void hmac(BYTE *key, int key_len, const BYTE *data, int data_len, BYTE *hmac_out)
+void hmac_sha256(BYTE *key, int key_len, const BYTE *data, int data_len, BYTE *hmac_out)
 {
     BYTE key_buf[SHA256_BLOCK_SIZE] = {0};
 
@@ -24,7 +24,7 @@ void hmac(BYTE *key, int key_len, const BYTE *data, int data_len, BYTE *hmac_out
     }
 
     size_t buf_size = SHA256_BLOCK_SIZE + data_len;
-    BYTE *in_buf = (BYTE *)malloc(buf_size);
+    BYTE *in_buf = (BYTE*) malloc(buf_size);
     memset(in_buf, 0x00, buf_size);
     memcpy(in_buf, key_buf, SHA256_BLOCK_SIZE);
     memcpy(in_buf + SHA256_BLOCK_SIZE, data, data_len);
@@ -36,7 +36,7 @@ void hmac(BYTE *key, int key_len, const BYTE *data, int data_len, BYTE *hmac_out
     }
 
     buf_size = SHA256_BLOCK_SIZE + SHA256_HASH_SIZE + 1;
-    in_buf = (BYTE *)realloc(in_buf, buf_size);
+    in_buf = (BYTE*) realloc(in_buf, buf_size);
     memset(in_buf, 0x00, buf_size);
     memcpy(in_buf, key_buf, SHA256_BLOCK_SIZE);
     memcpy(in_buf + SHA256_BLOCK_SIZE, hmac_out, SHA256_HASH_SIZE);
