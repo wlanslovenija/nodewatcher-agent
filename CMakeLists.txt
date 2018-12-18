@@ -13,6 +13,7 @@ option(CLIENTS_MODULE "Clients module support" ON)
 option(HTTP_PUSH_MODULE "HTTP push module support" ON)
 option(ROUTING_BABEL_MODULE "Babel routing module support" ON)
 option(ROUTING_OLSR_MODULE "OLSR routing module support" ON)
+option(MESHPOINT_MODULE "Meshpoint sensors module support" ON)
 
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
@@ -154,6 +155,14 @@ if(ROUTING_OLSR_MODULE)
   add_library(routing_olsr_module MODULE modules/routing_olsr.c)
   target_link_libraries(routing_olsr_module ${ubox_library} ${uci_library} nodewatcher-agent-common)
   set_target_properties(routing_olsr_module PROPERTIES OUTPUT_NAME routing_olsr PREFIX "")
+endif()
+
+# Meshpoint sensors module
+if(MESHPOINT_MODULE)
+  set(MODULES ${MODULES} meshpoint_module)
+  add_library(meshpoint_module MODULE modules/meshpoint.c)
+  target_link_libraries(meshpoint_module nodewatcher-agent-common)
+  set_target_properties(meshpoint_module PROPERTIES OUTPUT_NAME meshpoint PREFIX "")
 endif()
 
 install(TARGETS nodewatcher-agent nodewatcher-agent-common
