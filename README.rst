@@ -124,48 +124,50 @@ implemented:
 
 * ``core.routing.olsr`` provides information about the node's OLSR routing daemon.
 
+* ``core.meshpoint`` provides information about the Cilab MeshPoint node's built-in sensors.
+
 Development setup
 -----------------
 
-To build the master version of nodewatcher agent package a buildroot needs to be set up. Checkout `firmware core`_ and use the scripts which automatically download all the relevant feeds and create the buildroot in ``build/lede``::
+To build the master version of nodewatcher agent package a buildroot needs to be set up. It can either be built from OpenWrt source or a precompiled OpenWrt SDK can be used.
+This example uses 18.06.1 version of OpenWrt, ipq40xx target and its SDK. For latest version `OpenWrt download page`_ should be checked.::
 
-  ./lede/scripts/prepare v17.01.2 source.git 2da512ecf4631cd7812283f0931cf6bbf842a313
-  ./lede/scripts/configure-platform x86_64
-  ./lede/scripts/build-toolchain
+  curl -O https://downloads.openwrt.org/releases/18.06.1/targets/ipq40xx/generic/openwrt-sdk-18.06.1-ipq40xx_gcc-7.3.0_musl_eabi.Linux-x86_64.tar.xz
+  tar xvf openwrt-sdk-18.06.1-ipq40xx_gcc-7.3.0_musl_eabi.Linux-x86_64.tar.xz
+  cd openwrt-sdk-18.06.1-ipq40xx_gcc-7.3.0_musl_eabi.Linux-x86_64
 
-The latest LEDE version and commit hash should be looked up in the repository_. If building for a different platform, replace ``x86_64`` with a desired one (e.g. ``ar71xx``).
+Now you can either manually add Makefile localy or add a remote repository.
+In this example a remote repository is used.::
+  echo "src-git wlansi https://github.com/wlanslovenija/firmware-packages-opkg.git" >> feeds.conf.default
+  ./scripts/feeds update -a
+  ./scripts/feeds install nodewatcher-agent
 
-To build the nodewatcher agent and generate the desired package run::
+You probably want to disable some default settings, which build every available package. Enter Global Build Settings and in the submenu, deselect/exclude the following options:
+::
+  Select all target specific packages by default
+  Select all kernel module packages by default
+  Select all userspace packages by default
 
-  make package/nodewatcher-agent/{clean,compile} V=s
-
-Now ``make`` needs to be set so it builds the local version of the nodewatcher agent. Run ``make menuconfig``, go to ``Advanced configuration options (for developers)`` and check the ``Enable package source tree override`` option (press y). Exit and confirm changes. 
-
-All that remains is to create a symlink to the development repository::
-
-  cd package/feeds/nodewatcher/nodewatcher-agent
-  ln -s /home/user/path/to/nodewatcher-agent/.git git-src
-
-The above ``make`` command will now build the local HEAD version. Any changes need to be added to a temporary commit and edited using ``git commit --amend``.
+After that go to Base system and select Nodewatcher-agent and any modules you want.
+And simple make V=s will start building the package.
 
 Installing packages
 ~~~~~~~~~~~~~~~~~~~
 
-If building for an ``x86_64`` architecture, a virtual machine can be used for development. Run ``make`` in the buildroot directory to generate LEDE VM images for VMWare and VirtualBox. They will be located in ``bin/targets/x86/64``. Once the VM is running, set the SSH password using ``passwd`` and change ``lan`` setting from ``static`` to ``dhcp`` using::
+If building for an ``x86_64`` architecture, a virtual machine can be used for development. You can acquire VMWare or Virtualbox images from `OpenWrt download page`_.
+Once the VM is running, set the SSH password using ``passwd`` and change ``lan`` setting from ``static`` to ``dhcp`` using::
 
   uci set network.lan.proto='dhcp'
   uci commit
   reboot
 
-The built packages are located in ``bin/packages/x86_64/nodewatcher`` (if building for an ``x86_64`` architecture). They need to be transferred to a target device or virtual machine and installed. The easiest way would be to set up a local network and transfer the packages using::
+The built packages are located in ``bin/packages/``. They need to be transferred to a target device or virtual machine and installed. The easiest way would be to set up a local network and transfer the packages using::
 
-  scp -r nodewatcher root@192.168.X.X:/tmp
-
-Some dependencies need to be transferred from ``bin/packages/x86_64/lede``, ``bin/packages/x86_64/base`` and ``bin/targets/x86/64/packages``.
+  scp $filename root@192.168.X.X:/tmp
 
 Once all the packages are on the target machine connect to it using SSH::
 
-  ssh -oKexAlgorithms=+'diffie-hellman-group1-sha1' root@192.168.X.X
+  ssh root@192.168.X.X
 
 Go to target directories and install packages using::
 
@@ -177,18 +179,14 @@ Troubleshooting
 Troubleshoot connection issues with commands like ``uci show dropbear``, ``cat /etc/passwd``, ``cat /etc/shadow``, ``logread``, ``ip addr``...
 
 .. _firmware core: https://github.com/wlanslovenija/firmware-core
-.. _repository: https://github.com/lede-project/source/releases
+.. _OpenWrt download page: https://downloads.openwrt.org
 
 Source Code, Issue Tracker and Mailing List
 -------------------------------------------
 
-For development *wlan slovenija* open wireless network `development Trac`_ is
-used, so you can see `existing open tickets`_ or `open a new one`_ there. Source
-code is available on GitHub_. If you have any questions or if you want to
-discuss the project, use `nodewatcher mailing list`_.
+For development Github issues is used, so you can see `existing open tickets`_ or `open a new one`_ there. 
+Source code is available on GitHub_.
 
-.. _development Trac: https://dev.wlan-si.net/wiki/Nodewatcher
-.. _existing open tickets: https://dev.wlan-si.net/report/14
-.. _open a new one: https://dev.wlan-si.net/newticket
+.. _existing open tickets: https://github.com/wlanslovenija/nodewatcher-agent/issues
+.. _open a new one: https://github.com/wlanslovenija/nodewatcher-agent/issues/new
 .. _GitHub: https://github.com/wlanslovenija/nodewatcher-agent
-.. _nodewatcher mailing list: https://wlan-si.net/lists/info/nodewatcher
